@@ -1,0 +1,1979 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-08 22:19+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: storage/framework/views/0343ceb4b4e3d940f9a87de10610be1f.php:53
+#: storage/framework/views/d045147d1cae155221fc05558250834d.php:53
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:400
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:461
+#: storage/framework/views/f97efe10bf22c03a292dcbad72118574.php:53
+#: app/Services/Admin/ProductService.php:101
+msgid "product.status"
+msgstr ""
+
+#: storage/framework/views/06f3ab88a35c5b56c006b9971fd16647.php:84
+#: storage/framework/views/06f3ab88a35c5b56c006b9971fd16647.php:210
+msgid "filament-tables::table.grouping.fields.group.label"
+msgstr ""
+
+#: storage/framework/views/06f3ab88a35c5b56c006b9971fd16647.php:140
+#: storage/framework/views/06f3ab88a35c5b56c006b9971fd16647.php:269
+msgid "filament-tables::table.grouping.fields.direction.label"
+msgstr ""
+
+#: storage/framework/views/06f3ab88a35c5b56c006b9971fd16647.php:165
+#: storage/framework/views/06f3ab88a35c5b56c006b9971fd16647.php:294
+msgid "filament-tables::table.grouping.fields.direction.options.asc"
+msgstr ""
+
+#: storage/framework/views/06f3ab88a35c5b56c006b9971fd16647.php:170
+#: storage/framework/views/06f3ab88a35c5b56c006b9971fd16647.php:299
+msgid "filament-tables::table.grouping.fields.direction.options.desc"
+msgstr ""
+
+#: storage/framework/views/06f3ab88a35c5b56c006b9971fd16647.php:235
+msgid "filament-tables::table.grouping.fields.group.placeholder"
+msgstr ""
+
+#: storage/framework/views/08de836e07d659720c7bb453428608c9.php:9
+#: storage/framework/views/08de836e07d659720c7bb453428608c9.php:17
+#: storage/framework/views/08de836e07d659720c7bb453428608c9.php:23
+msgid "filament-tables::table.fields.search.placeholder"
+msgstr ""
+
+#: storage/framework/views/08de836e07d659720c7bb453428608c9.php:44
+msgid "filament-tables::table.fields.search.label"
+msgstr ""
+
+#: storage/framework/views/0a3cc1c97dc3955384b7bda23beadd67.php:7
+#: storage/framework/views/0a3cc1c97dc3955384b7bda23beadd67.php:12
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:6
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:11
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:55
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:63
+#: storage/framework/views/505fdc54b90c3360d62d6b3619a84eed.php:6
+#: storage/framework/views/505fdc54b90c3360d62d6b3619a84eed.php:11
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:6
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:11
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:36
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:44
+#: storage/framework/views/cda9797379f20ccfb529f964c0581dd2.php:6
+#: storage/framework/views/cda9797379f20ccfb529f964c0581dd2.php:11
+#: storage/framework/views/df78ae34a113006759cb57c81b674256.php:7
+#: storage/framework/views/df78ae34a113006759cb57c81b674256.php:12
+msgid "pagination.previous"
+msgstr ""
+
+#: storage/framework/views/0a3cc1c97dc3955384b7bda23beadd67.php:21
+#: storage/framework/views/0a3cc1c97dc3955384b7bda23beadd67.php:25
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:18
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:23
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:98
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:104
+#: storage/framework/views/505fdc54b90c3360d62d6b3619a84eed.php:19
+#: storage/framework/views/505fdc54b90c3360d62d6b3619a84eed.php:24
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:18
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:23
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:79
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:85
+#: storage/framework/views/cda9797379f20ccfb529f964c0581dd2.php:19
+#: storage/framework/views/cda9797379f20ccfb529f964c0581dd2.php:24
+#: storage/framework/views/df78ae34a113006759cb57c81b674256.php:21
+#: storage/framework/views/df78ae34a113006759cb57c81b674256.php:25
+msgid "pagination.next"
+msgstr ""
+
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:33
+#: storage/framework/views/5cd61608759e2608a5fa3ab6ec708fad.php:23
+#: storage/framework/views/a03c8dea06b23e55e951fc6489bdfab7.php:24
+#: storage/framework/views/d6639f700b779c47511ab51ce38a1e7c.php:127
+#: storage/framework/views/d6639f700b779c47511ab51ce38a1e7c.php:134
+msgid "filament-panels::layout.direction"
+msgstr ""
+
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:38
+msgid "filament::components/pagination.label"
+msgstr ""
+
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:65
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:266
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:273
+msgid "filament::components/pagination.actions.previous.label"
+msgstr ""
+
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:121
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:175
+msgid "filament::components/pagination.fields.records_per_page.options.all"
+msgstr ""
+
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:147
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:155
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:162
+msgid "filament::components/pagination.fields.records_per_page.label"
+msgstr ""
+
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:222
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:339
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:346
+msgid "filament::components/pagination.actions.next.label"
+msgstr ""
+
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:244
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:251
+msgid "filament::components/pagination.actions.first.label"
+msgstr ""
+
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:361
+#: storage/framework/views/0aaa25f1567b473adcd8fa5988a2a46a.php:368
+msgid "filament::components/pagination.actions.last.label"
+msgstr ""
+
+#: storage/framework/views/0e6a4ab57fdda9d9076f7f496247fc65.php:7
+#: storage/framework/views/1a283fce9c0b755f353149e0d8952c13.php:34
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:30
+#: storage/framework/views/3b8979ecffdce043656d1c88197d7a65.php:63
+#: storage/framework/views/3e5e45e4e1414f95af2aa3cf952a0b5e.php:32
+#: storage/framework/views/4efaa769d99e06ce5713b945bc248b87.php:52
+#: storage/framework/views/587263b536d946b1a1dd7b74e1d7e8be.php:35
+#: storage/framework/views/70b142e8230e905cfbae9e45262ba50f.php:19
+#: storage/framework/views/849dc90a573d0700e1cb95a22e51cc9c.php:33
+#: storage/framework/views/94e8d55e77dc7846f9fcec1edd5cdb73.php:35
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:130
+#: app/Filament/Resources/CategoryResource.php:36
+#: app/Filament/Resources/CategoryResource.php:60
+#: app/Filament/Resources/ColorResource.php:30
+#: app/Filament/Resources/ColorResource.php:41
+#: app/Filament/Resources/DeliveryResource.php:30
+#: app/Filament/Resources/DeliveryResource.php:43
+#: app/Filament/Resources/ProductResource.php:52
+#: app/Filament/Resources/ProductResource.php:206
+#: app/Filament/Resources/SizeResource.php:31
+#: app/Filament/Resources/SizeResource.php:41
+#: app/Filament/Resources/SubCategoryResource.php:37
+#: app/Filament/Resources/SubCategoryResource.php:57
+#: app/Filament/Resources/TagResource.php:26
+#: app/Filament/Resources/TagResource.php:35
+msgid "name"
+msgstr ""
+
+#: storage/framework/views/0e6a4ab57fdda9d9076f7f496247fc65.php:46
+#: storage/framework/views/0e6a4ab57fdda9d9076f7f496247fc65.php:91
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:222
+msgid "main:image"
+msgstr ""
+
+#: storage/framework/views/0e6a4ab57fdda9d9076f7f496247fc65.php:119
+#: storage/framework/views/31b4ab2cd3fc9ac6fa3f586ea34c4702.php:115
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:82
+#: storage/framework/views/3e5e45e4e1414f95af2aa3cf952a0b5e.php:64
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:34
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:32
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:159
+#: storage/framework/views/94e8d55e77dc7846f9fcec1edd5cdb73.php:88
+#: storage/framework/views/9eb435018010d2dfd6345e84ee99abfb.php:43
+#: storage/framework/views/d2439efc102fc4b0bfb1e1edd6eb7f5c.php:61
+#: storage/framework/views/d2439efc102fc4b0bfb1e1edd6eb7f5c.php:71
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:55
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:52
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:118
+#: storage/framework/views/e921ebfcd11698e06827616a61bc1ec8.php:52
+msgid "save"
+msgstr ""
+
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:2
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:2
+msgid "Pagination Navigation"
+msgstr ""
+
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:32
+#: storage/framework/views/edba7841b52418d35843bc8275dd28b3.php:32
+#: storage/framework/views/f05cc00f94b47128b14f5dcd52424e47.php:32
+msgid "Showing"
+msgstr ""
+
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:36
+#: storage/framework/views/edba7841b52418d35843bc8275dd28b3.php:35
+#: storage/framework/views/f05cc00f94b47128b14f5dcd52424e47.php:35
+msgid "to"
+msgstr ""
+
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:43
+#: storage/framework/views/edba7841b52418d35843bc8275dd28b3.php:38
+#: storage/framework/views/f05cc00f94b47128b14f5dcd52424e47.php:38
+msgid "of"
+msgstr ""
+
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:46
+#: storage/framework/views/edba7841b52418d35843bc8275dd28b3.php:41
+#: storage/framework/views/f05cc00f94b47128b14f5dcd52424e47.php:41
+msgid "results"
+msgstr ""
+
+#: storage/framework/views/1068bee3543023cad7fa029104dfad06.php:87
+#: storage/framework/views/90c85e19ae7092a70f5ee82b2f1759dc.php:68
+msgid "Go to page :page"
+msgstr ""
+
+#: storage/framework/views/16c491702e0710ddeade777dfa2f745b.php:62
+msgid ""
+"filament-panels::widgets/filament-info-widget.actions.open_documentation."
+"label"
+msgstr ""
+
+#: storage/framework/views/16c491702e0710ddeade777dfa2f745b.php:99
+msgid "filament-panels::widgets/filament-info-widget.actions.open_github.label"
+msgstr ""
+
+#: storage/framework/views/1a283fce9c0b755f353149e0d8952c13.php:28
+#: storage/framework/views/587263b536d946b1a1dd7b74e1d7e8be.php:29
+#: storage/framework/views/94e8d55e77dc7846f9fcec1edd5cdb73.php:29
+msgid "base-info"
+msgstr ""
+
+#: storage/framework/views/1a283fce9c0b755f353149e0d8952c13.php:54
+#: storage/framework/views/94e8d55e77dc7846f9fcec1edd5cdb73.php:55
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:141
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:143
+#: storage/framework/views/9eb435018010d2dfd6345e84ee99abfb.php:21
+#: app/Filament/Resources/ColorResource.php:31
+#: app/Filament/Resources/ColorResource.php:42
+#: app/Filament/Resources/OrderGroupResource.php:73
+#: app/Filament/Resources/ProductResource.php:147
+#: app/Filament/Resources/ProductResource.php:168
+msgid "color"
+msgstr ""
+
+#: storage/framework/views/1a283fce9c0b755f353149e0d8952c13.php:82
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:157
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:154
+#: storage/framework/views/587263b536d946b1a1dd7b74e1d7e8be.php:63
+#: storage/framework/views/94e8d55e77dc7846f9fcec1edd5cdb73.php:83
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:437
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:498
+msgid "almost:done"
+msgstr ""
+
+#: storage/framework/views/1a283fce9c0b755f353149e0d8952c13.php:86
+#: storage/framework/views/3e5e45e4e1414f95af2aa3cf952a0b5e.php:60
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:33
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:161
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:31
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:158
+#: storage/framework/views/587263b536d946b1a1dd7b74e1d7e8be.php:67
+#: storage/framework/views/94e8d55e77dc7846f9fcec1edd5cdb73.php:87
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:54
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:442
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:51
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:503
+msgid "discard"
+msgstr ""
+
+#: storage/framework/views/1a283fce9c0b755f353149e0d8952c13.php:87
+#: storage/framework/views/587263b536d946b1a1dd7b74e1d7e8be.php:68
+msgid "add"
+msgstr ""
+
+#: storage/framework/views/20f5bab6c735c9a7ba6c4e7083cc2791.php:45
+#: storage/framework/views/9eb435018010d2dfd6345e84ee99abfb.php:40
+#: storage/framework/views/d2439efc102fc4b0bfb1e1edd6eb7f5c.php:58
+msgid "delete"
+msgstr ""
+
+#: storage/framework/views/23452bf448d90d9acd81a1bac767a0ed.php:32
+#: storage/framework/views/64a029c05cf49bbf12ad4bd96719c1c0.php:179
+#: storage/framework/views/64a029c05cf49bbf12ad4bd96719c1c0.php:190
+msgid "all"
+msgstr ""
+
+#: storage/framework/views/26c0cf6b39fb75c1ca43a8ce257b7855.php:13
+msgid "filament-panels::pages/auth/login.actions.register.before"
+msgstr ""
+
+#: storage/framework/views/2dc6f42a2aca42f2128a8d4c1b5b4236.php:53
+msgid "filament-forms::components.markdown_editor"
+msgstr ""
+
+#: storage/framework/views/31b4ab2cd3fc9ac6fa3f586ea34c4702.php:10
+#: storage/framework/views/31b4ab2cd3fc9ac6fa3f586ea34c4702.php:79
+#: app/Filament/Resources/SettingsResource.php:32
+#: app/Filament/Resources/SettingsResource.php:43
+msgid "key"
+msgstr ""
+
+#: storage/framework/views/31b4ab2cd3fc9ac6fa3f586ea34c4702.php:11
+#: storage/framework/views/31b4ab2cd3fc9ac6fa3f586ea34c4702.php:99
+#: app/Filament/Resources/SettingsResource.php:33
+#: app/Filament/Resources/SettingsResource.php:44
+msgid "value"
+msgstr ""
+
+#: storage/framework/views/31b4ab2cd3fc9ac6fa3f586ea34c4702.php:12
+#: storage/framework/views/3b8979ecffdce043656d1c88197d7a65.php:64
+#: storage/framework/views/4efaa769d99e06ce5713b945bc248b87.php:72
+#: storage/framework/views/70b142e8230e905cfbae9e45262ba50f.php:23
+#: storage/framework/views/849dc90a573d0700e1cb95a22e51cc9c.php:34
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:85
+msgid "action"
+msgstr ""
+
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:11
+#: app/Services/Admin/ProductService.php:85
+#: app/Filament/Resources/ProductResource.php:77
+msgid "subcategory"
+msgstr ""
+
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:33
+msgid "subcategory:name"
+msgstr ""
+
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:37
+#: storage/framework/views/4efaa769d99e06ce5713b945bc248b87.php:60
+#: app/Filament/Resources/SubCategoryResource.php:40
+msgid "code"
+msgstr ""
+
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:40
+msgid "subcategory:code"
+msgstr ""
+
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:45
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:77
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:73
+#: storage/framework/views/4efaa769d99e06ce5713b945bc248b87.php:68
+#: storage/framework/views/70b142e8230e905cfbae9e45262ba50f.php:21
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:55
+#: app/Filament/Resources/BannerResource.php:46
+#: app/Filament/Resources/CategoryResource.php:38
+#: app/Filament/Resources/CategoryResource.php:61
+#: app/Filament/Resources/SubCategoryResource.php:47
+#: app/Filament/Resources/SubCategoryResource.php:59
+msgid "position"
+msgstr ""
+
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:48
+msgid "subcategory:position"
+msgstr ""
+
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:52
+#: storage/framework/views/4efaa769d99e06ce5713b945bc248b87.php:56
+#: storage/framework/views/64a029c05cf49bbf12ad4bd96719c1c0.php:177
+#: app/Services/Admin/ProductService.php:81
+#: app/Filament/Resources/CategoryResource.php:24
+#: app/Filament/Resources/PagesResource.php:44
+#: app/Filament/Resources/PagesResource.php:60
+#: app/Filament/Resources/ProductResource.php:62
+#: app/Filament/Resources/SubCategoryResource.php:23
+#: app/Filament/Resources/SubCategoryResource.php:44
+#: app/Filament/Resources/SubCategoryResource.php:58
+msgid "category"
+msgstr ""
+
+#: storage/framework/views/3394fdc3a05c5f30c852a9eab8597de2.php:63
+#: storage/framework/views/4efaa769d99e06ce5713b945bc248b87.php:64
+#: storage/framework/views/70b142e8230e905cfbae9e45262ba50f.php:22
+#: app/Services/Admin/ProductService.php:89
+#: app/Filament/Resources/CategoryResource.php:41
+#: app/Filament/Resources/CategoryResource.php:62
+#: app/Filament/Resources/ProductResource.php:113
+#: app/Filament/Resources/SubCategoryResource.php:49
+msgid "gender"
+msgstr ""
+
+#: storage/framework/views/386b801ab907e69e6c71d9abf748ca56.php:46
+#: storage/framework/views/386b801ab907e69e6c71d9abf748ca56.php:53
+#: storage/framework/views/e1c82f35790f004c40f45b8db25bd2ca.php:29
+msgid "filament-tables::table.filters.heading"
+msgstr ""
+
+#: storage/framework/views/3b4f8aaa99b2c2429614f9f6fea59e92.php:28
+msgid "login:desc"
+msgstr ""
+
+#: storage/framework/views/3b4f8aaa99b2c2429614f9f6fea59e92.php:43
+msgid "account:login"
+msgstr ""
+
+#: storage/framework/views/3b4f8aaa99b2c2429614f9f6fea59e92.php:51
+msgid "phone:number"
+msgstr ""
+
+#: storage/framework/views/3b4f8aaa99b2c2429614f9f6fea59e92.php:72
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:60
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:110
+msgid "password"
+msgstr ""
+
+#: storage/framework/views/3b4f8aaa99b2c2429614f9f6fea59e92.php:104
+msgid "remember:me"
+msgstr ""
+
+#: storage/framework/views/3b4f8aaa99b2c2429614f9f6fea59e92.php:113
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:29
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:78
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:142
+msgid "login"
+msgstr ""
+
+#: storage/framework/views/3b8979ecffdce043656d1c88197d7a65.php:33
+#: storage/framework/views/d1dafb1e155012fbee8aa27067b58367.php:41
+#: app/Filament/Resources/ProductResource.php:104
+msgid "sizes"
+msgstr ""
+
+#: storage/framework/views/3b8979ecffdce043656d1c88197d7a65.php:40
+#: storage/framework/views/41421f64fbf3a9b00aa730dddaddb324.php:44
+#: storage/framework/views/4efaa769d99e06ce5713b945bc248b87.php:43
+#: storage/framework/views/849dc90a573d0700e1cb95a22e51cc9c.php:20
+msgid "create"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:54
+msgid "filament-forms::components.file_upload.editor.svg.messages.confirmation"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:55
+msgid "filament-forms::components.file_upload.editor.svg.messages.disabled"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:190
+msgid "filament-forms::components.file_upload.editor.fields.x_position.label"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:192
+msgid "filament-forms::components.file_upload.editor.fields.x_position.unit"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:196
+msgid "filament-forms::components.file_upload.editor.fields.y_position.label"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:198
+msgid "filament-forms::components.file_upload.editor.fields.y_position.unit"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:202
+msgid "filament-forms::components.file_upload.editor.fields.width.label"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:204
+msgid "filament-forms::components.file_upload.editor.fields.width.unit"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:208
+msgid "filament-forms::components.file_upload.editor.fields.height.label"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:210
+msgid "filament-forms::components.file_upload.editor.fields.height.unit"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:214
+msgid "filament-forms::components.file_upload.editor.fields.rotation.label"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:216
+msgid "filament-forms::components.file_upload.editor.fields.rotation.unit"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:305
+msgid "filament-forms::components.file_upload.editor.aspect_ratios.label"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:323
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:330
+msgid ""
+"filament-forms::components.file_upload.editor.actions.set_aspect_ratio.label"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:373
+msgid "filament-forms::components.file_upload.editor.actions.cancel.label"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:396
+msgid "filament-forms::components.file_upload.editor.actions.reset.label"
+msgstr ""
+
+#: storage/framework/views/3c8014d35d500f5a5356342d4bae2bcb.php:419
+msgid "filament-forms::components.file_upload.editor.actions.save.label"
+msgstr ""
+
+#: storage/framework/views/3e5e45e4e1414f95af2aa3cf952a0b5e.php:26
+msgid "size.base-info"
+msgstr ""
+
+#: storage/framework/views/4114f5c50879f293fdb7477d13f95759.php:188
+#: storage/framework/views/4796472dc283b63c33bd0fd900b8734c.php:46
+#: storage/framework/views/4796472dc283b63c33bd0fd900b8734c.php:91
+#: storage/framework/views/54c7addc2d07e89122d759b532d94509.php:38
+#: storage/framework/views/54c7addc2d07e89122d759b532d94509.php:41
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:87
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:90
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:93
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:96
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:144
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:77
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:105
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:41
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:59
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:55
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:62
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:380
+#: app/Models/Product.php:81 app/Models/Product.php:186
+#: app/Http/Helpers/OrderHelper.php:30 app/Http/Helpers/OrderHelper.php:32
+msgid "currency"
+msgstr ""
+
+#: storage/framework/views/460897b0192f44fd092045c25cc1ec4f.php:49
+msgid "filament-tables::table.column_toggle.heading"
+msgstr ""
+
+#: storage/framework/views/465d368024fe3c6bef7e8e2461f07735.php:33
+#: storage/framework/views/465d368024fe3c6bef7e8e2461f07735.php:40
+msgid "filament-notifications::database.modal.empty.description"
+msgstr ""
+
+#: storage/framework/views/465d368024fe3c6bef7e8e2461f07735.php:33
+#: storage/framework/views/465d368024fe3c6bef7e8e2461f07735.php:40
+msgid "filament-notifications::database.modal.empty.heading"
+msgstr ""
+
+#: storage/framework/views/4796472dc283b63c33bd0fd900b8734c.php:43
+#: storage/framework/views/64a029c05cf49bbf12ad4bd96719c1c0.php:198
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:52
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:95
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:82
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:83
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:214
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:221
+#: app/Filament/Resources/UserResource.php:31
+#: app/Filament/Resources/UserResource.php:55
+msgid "phone"
+msgstr ""
+
+#: storage/framework/views/4796472dc283b63c33bd0fd900b8734c.php:44
+#: app/Filament/Resources/ProductResource.php:215
+msgid "created_at"
+msgstr ""
+
+#: storage/framework/views/4796472dc283b63c33bd0fd900b8734c.php:45
+#: app/Filament/Resources/OrderGroupResource.php:53
+msgid "orders"
+msgstr ""
+
+#: storage/framework/views/4796472dc283b63c33bd0fd900b8734c.php:45
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:135
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:104
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:142
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:165
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:188
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:55
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:62
+#: app/Services/Admin/ProductService.php:70
+#: app/Services/Admin/ProductService.php:78
+msgid "ta"
+msgstr ""
+
+#: storage/framework/views/4796472dc283b63c33bd0fd900b8734c.php:46
+#: app/Filament/Resources/UserResource.php:42
+#: app/Filament/Resources/UserResource.php:59
+msgid "balance"
+msgstr ""
+
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:29
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:162
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:27
+msgid "category.add"
+msgstr ""
+
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:43
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:41
+msgid "category.base-info"
+msgstr ""
+
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:99
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:95
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:281
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:345
+msgid "product.select-gender"
+msgstr ""
+
+#: storage/framework/views/48753e82b39cadc7d21a092411593394.php:129
+#: storage/framework/views/4a1ba14118fee0161cf1aaa68ec5e16d.php:126
+#: app/Filament/Resources/BannerResource.php:53
+#: app/Filament/Resources/CategoryResource.php:51
+#: app/Filament/Resources/PagesResource.php:57
+#: app/Filament/Resources/ProductResource.php:176
+#: app/Filament/Resources/ProductResource.php:182
+msgid "image"
+msgstr ""
+
+#: storage/framework/views/4bb1cbddc717787df9c92309c96a45c9.php:28
+msgid "Enter confirm code?"
+msgstr ""
+
+#: storage/framework/views/4bb1cbddc717787df9c92309c96a45c9.php:129
+msgid "Back"
+msgstr ""
+
+#: storage/framework/views/4bb1cbddc717787df9c92309c96a45c9.php:135
+#: storage/framework/views/cb713b3f498549edc1f7df7fa1728c2e.php:23
+msgid "Delete"
+msgstr ""
+
+#: storage/framework/views/4f28daa4e32dd1d4cd24cc4e89426cd8.php:36
+msgid "filament-panels::layout.actions.open_user_menu.label"
+msgstr ""
+
+#: storage/framework/views/4f28daa4e32dd1d4cd24cc4e89426cd8.php:231
+msgid "filament-panels::layout.actions.logout.label"
+msgstr ""
+
+#: storage/framework/views/5256521a4c2dc9784c7f800da331d1a7.php:9
+msgid "Enter phone number"
+msgstr ""
+
+#: storage/framework/views/5256521a4c2dc9784c7f800da331d1a7.php:25
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:57
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:100
+msgid "You phone number"
+msgstr ""
+
+#: storage/framework/views/5256521a4c2dc9784c7f800da331d1a7.php:30
+msgid "Continue"
+msgstr ""
+
+#: storage/framework/views/533524f8efd7fe97728ce0c8617301c4.php:9
+msgid "Deleted Account ✅"
+msgstr ""
+
+#: storage/framework/views/533524f8efd7fe97728ce0c8617301c4.php:18
+#: storage/framework/views/fdd18f21e1d05f7c536e50d49bde0969.php:9
+msgid "Home"
+msgstr ""
+
+#: storage/framework/views/54c7addc2d07e89122d759b532d94509.php:44
+#: storage/framework/views/64a029c05cf49bbf12ad4bd96719c1c0.php:188
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:137
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:55
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:69
+#: app/Filament/Resources/BannerResource.php:42
+#: app/Filament/Resources/OrderGroupResource.php:40
+#: app/Filament/Resources/OrderGroupResource.php:119
+#: app/Filament/Resources/OrderGroupResource.php:126
+#: app/Filament/Resources/ProductResource.php:121
+msgid "status"
+msgstr ""
+
+#: storage/framework/views/54c7addc2d07e89122d759b532d94509.php:50
+#: storage/framework/views/54c7addc2d07e89122d759b532d94509.php:57
+msgid "edit"
+msgstr ""
+
+#: storage/framework/views/5cd61608759e2608a5fa3ab6ec708fad.php:121
+#: storage/framework/views/5cd61608759e2608a5fa3ab6ec708fad.php:128
+#: storage/framework/views/8947f59ae45dc8f2a5d5d76ea44e2c4c.php:37
+#: storage/framework/views/8947f59ae45dc8f2a5d5d76ea44e2c4c.php:47
+msgid "filament-panels::layout.actions.sidebar.expand.label"
+msgstr ""
+
+#: storage/framework/views/5cd61608759e2608a5fa3ab6ec708fad.php:144
+#: storage/framework/views/5cd61608759e2608a5fa3ab6ec708fad.php:151
+#: storage/framework/views/8947f59ae45dc8f2a5d5d76ea44e2c4c.php:64
+#: storage/framework/views/8947f59ae45dc8f2a5d5d76ea44e2c4c.php:71
+msgid "filament-panels::layout.actions.sidebar.collapse.label"
+msgstr ""
+
+#: storage/framework/views/64a029c05cf49bbf12ad4bd96719c1c0.php:166
+#: storage/framework/views/64a029c05cf49bbf12ad4bd96719c1c0.php:172
+#: storage/framework/views/6d2c6a315f87a52b73a7a9a097513fda.php:91
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:77
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:157
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:163
+msgid "filter"
+msgstr ""
+
+#: storage/framework/views/64a029c05cf49bbf12ad4bd96719c1c0.php:207
+#: storage/framework/views/65b41d1485e41ab2398a834843d3dcac.php:686
+#: storage/framework/views/96474ccf6abaef6059e45ca4613f9241.php:797
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:105
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:112
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:235
+msgid "update"
+msgstr ""
+
+#: storage/framework/views/65b41d1485e41ab2398a834843d3dcac.php:85
+msgid "."
+msgstr ""
+
+#: storage/framework/views/65b41d1485e41ab2398a834843d3dcac.php:1044
+#: storage/framework/views/96474ccf6abaef6059e45ca4613f9241.php:200
+#: storage/framework/views/96474ccf6abaef6059e45ca4613f9241.php:1170
+msgid "logout"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:34
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:148
+#: storage/framework/views/f65c0216f282c8004303e8dbc853870d.php:458
+msgid "register"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:38
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:254
+msgid "confirm"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:65
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:115
+msgid "You password"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:71
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:134
+msgid "show:password"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:76
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:251
+msgid "forgot:password"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:103
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:82
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:192
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:199
+#: app/Filament/Resources/UserResource.php:32
+#: app/Filament/Resources/UserResource.php:56
+msgid "full_name"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:107
+msgid "You First name"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:118
+msgid "password_confirm"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:126
+msgid "You password confirm"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:139
+msgid "account:already"
+msgstr ""
+
+#: storage/framework/views/6dfa3e761d0c3371b353554c077cc1cc.php:197
+msgid "resend"
+msgstr ""
+
+#: storage/framework/views/6e373bae6ec1a08aae5d5ba7d33da5c1.php:71
+msgid "filament-tables::table.selection_indicator.selected_count"
+msgstr ""
+
+#: storage/framework/views/6e373bae6ec1a08aae5d5ba7d33da5c1.php:113
+msgid "filament-tables::table.selection_indicator.actions.deselect_all.label"
+msgstr ""
+
+#: storage/framework/views/700d5568e368a17a3b810c1c674b9e34.php:287
+#: storage/framework/views/700d5568e368a17a3b810c1c674b9e34.php:294
+msgid "filament::components/modal.actions.close.label"
+msgstr ""
+
+#: storage/framework/views/70b142e8230e905cfbae9e45262ba50f.php:20
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:164
+msgid "products"
+msgstr ""
+
+#: storage/framework/views/749422830c782625cc5828ed69429b2a.php:176
+msgid "filament-panels::layout.actions.billing.label"
+msgstr ""
+
+#: storage/framework/views/755909783acf8f3031addb00248019c0.php:3
+#: storage/framework/views/755909783acf8f3031addb00248019c0.php:10
+msgid "filament-panels::layout.actions.open_database_notifications.label"
+msgstr ""
+
+#: storage/framework/views/78a58078a0138c4164513ffd7640e21d.php:50
+msgid "filament-tables::table.reorder_indicator"
+msgstr ""
+
+#: storage/framework/views/7a079c373fbb12f52cc164a17cb4e94b.php:73
+msgid "first:order:discount"
+msgstr ""
+
+#: storage/framework/views/7a079c373fbb12f52cc164a17cb4e94b.php:118
+msgid "select:color:2"
+msgstr ""
+
+#: storage/framework/views/7a079c373fbb12f52cc164a17cb4e94b.php:421
+#: storage/framework/views/7a079c373fbb12f52cc164a17cb4e94b.php:470
+#: storage/framework/views/9eb435018010d2dfd6345e84ee99abfb.php:8
+msgid "select:color"
+msgstr ""
+
+#: storage/framework/views/7a079c373fbb12f52cc164a17cb4e94b.php:475
+msgid "select:size"
+msgstr ""
+
+#: storage/framework/views/7a079c373fbb12f52cc164a17cb4e94b.php:485
+#: storage/framework/views/7a079c373fbb12f52cc164a17cb4e94b.php:496
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:589
+msgid "create:order"
+msgstr ""
+
+#: storage/framework/views/8037e0991f41adda29ace8b9e4c6989b.php:51
+msgid "filament-panels::widgets/account-widget.welcome"
+msgstr ""
+
+#: storage/framework/views/8037e0991f41adda29ace8b9e4c6989b.php:78
+msgid "filament-panels::widgets/account-widget.actions.logout.label"
+msgstr ""
+
+#: storage/framework/views/81bfae58cba6596838de8a5399d53e2d.php:53
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:537
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:544
+msgid "filament-tables::table.sorting.fields.column.label"
+msgstr ""
+
+#: storage/framework/views/81bfae58cba6596838de8a5399d53e2d.php:53
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:619
+msgid "filament-tables::table.sorting.fields.direction.options.desc"
+msgstr ""
+
+#: storage/framework/views/81bfae58cba6596838de8a5399d53e2d.php:53
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:614
+msgid "filament-tables::table.sorting.fields.direction.options.asc"
+msgstr ""
+
+#: storage/framework/views/85019228306825aa9e62216833450655.php:4
+msgid "product.category"
+msgstr ""
+
+#: storage/framework/views/85019228306825aa9e62216833450655.php:35
+msgid "product.subcategory"
+msgstr ""
+
+#: storage/framework/views/85019228306825aa9e62216833450655.php:65
+msgid "product.offer"
+msgstr ""
+
+#: storage/framework/views/8bd3458e4356cd20625174a8347e42df.php:12
+msgid "filament-panels::global-search.field.label"
+msgstr ""
+
+#: storage/framework/views/8bd3458e4356cd20625174a8347e42df.php:28
+#: storage/framework/views/8bd3458e4356cd20625174a8347e42df.php:42
+msgid "filament-panels::global-search.field.placeholder"
+msgstr ""
+
+#: storage/framework/views/92b54dd8e61b558b382d08c55a036ece.php:9
+#: storage/framework/views/92b54dd8e61b558b382d08c55a036ece.php:21
+msgid "product:detail"
+msgstr ""
+
+#: storage/framework/views/92b54dd8e61b558b382d08c55a036ece.php:13
+#: storage/framework/views/92b54dd8e61b558b382d08c55a036ece.php:118
+msgid "product:dostavca"
+msgstr ""
+
+#: storage/framework/views/92b54dd8e61b558b382d08c55a036ece.php:90
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:115
+msgid "home"
+msgstr ""
+
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:467
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:486
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1315
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1334
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1493
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1512
+msgid "filament-tables::table.fields.bulk_select_page.label"
+msgstr ""
+
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:589
+msgid "filament-tables::table.sorting.fields.direction.label"
+msgstr ""
+
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:704
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:716
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1092
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1099
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1694
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1701
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:2295
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:2302
+msgid "filament-tables::table.summary.subheadings.group"
+msgstr ""
+
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:888
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:895
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1992
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:1999
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:2195
+#: storage/framework/views/937a912eea6349787de3e97befe50484.php:2202
+msgid "filament-tables::table.fields.bulk_select_record.label"
+msgstr ""
+
+#: storage/framework/views/976687be0fb37ae271bec319b68fb7ba.php:16
+msgid "page:not:found"
+msgstr ""
+
+#: storage/framework/views/976687be0fb37ae271bec319b68fb7ba.php:20
+msgid "back:home"
+msgstr ""
+
+#: storage/framework/views/976687be0fb37ae271bec319b68fb7ba.php:21
+msgid "contact:support"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:37
+msgid "order.detail"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:61
+msgid "order.status"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:78
+msgid "order.billing"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:79
+msgid "client"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:80
+msgid "payment:type"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:86
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:59
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:349
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:411
+#: app/Filament/Resources/DeliveryResource.php:32
+#: app/Filament/Resources/DeliveryResource.php:44
+#: app/Filament/Resources/OrderGroupResource.php:62
+#: app/Filament/Resources/ProductResource.php:94
+#: app/Filament/Resources/ProductResource.php:209
+msgid "price"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:89
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:374
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:436
+#: app/Filament/Resources/OrderGroupResource.php:66
+#: app/Filament/Resources/ProductResource.php:98
+#: app/Filament/Resources/ProductResource.php:212
+msgid "discount"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:92
+msgid "Kashbackdan to'ladi"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:95
+msgid "Kashback berildi"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:100
+#: app/Filament/Resources/OrderGroupResource.php:90
+#: app/Filament/Resources/OrderGroupResource.php:118
+#: app/Filament/Resources/UserResource.php:37
+#: app/Filament/Resources/UserResource.php:57
+msgid "address"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:109
+msgid "Yandex maps"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:116
+msgid "Qo'shimcha malumot"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:117
+msgid "Yetkazib berish vaqti: "
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:126
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:61
+#: app/Filament/Resources/OrderGroupResource.php:58
+#: app/Filament/Resources/VideoResource.php:31
+msgid "product"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:134
+#: storage/framework/views/e921ebfcd11698e06827616a61bc1ec8.php:19
+#: app/Filament/Resources/OrderGroupResource.php:70
+#: app/Filament/Resources/ProductResource.php:155
+msgid "count"
+msgstr ""
+
+#: storage/framework/views/98687312baa62856c6f050c01c81556d.php:139
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:111
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:105
+msgid "product.size"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:12
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:16
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:48
+msgid "Orders"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:15
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:87
+msgid "Profile"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:17
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:124
+msgid "Wishlist"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:40
+msgid "Logout"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:51
+msgid "order.number"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:53
+msgid "order.date"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:57
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:374
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:544
+msgid "total"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:99
+#: app/Filament/Resources/UserResource.php:40
+#: app/Filament/Resources/UserResource.php:58
+msgid "card"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:104
+#: app/Filament/Resources/OrderGroupResource.php:47
+#: app/Filament/Resources/OrderGroupResource.php:122
+msgid "cashback"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:127
+msgid "product:id"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:129
+msgid "product:name"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:131
+msgid "product:count"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:133
+msgid "product:status"
+msgstr ""
+
+#: storage/framework/views/99850b31d52ddcb048cd162267fd2301.php:135
+msgid "product:gender"
+msgstr ""
+
+#: storage/framework/views/9e472f9be7cc3239e24befab086a3bdf.php:96
+#: storage/framework/views/9e472f9be7cc3239e24befab086a3bdf.php:163
+msgid "filament-tables::table.summary.heading"
+msgstr ""
+
+#: storage/framework/views/9e472f9be7cc3239e24befab086a3bdf.php:207
+#: storage/framework/views/9e472f9be7cc3239e24befab086a3bdf.php:214
+msgid "filament-tables::table.summary.subheadings.page"
+msgstr ""
+
+#: storage/framework/views/9eb435018010d2dfd6345e84ee99abfb.php:27
+msgid "none"
+msgstr ""
+
+#: storage/framework/views/a1cd45d8e99912be612af53378fa90f2.php:5
+msgid "filament-panels::global-search.no_results_message"
+msgstr ""
+
+#: storage/framework/views/a3dbdfa6bdc7a809f771651b19c13fad.php:32
+msgid "filament-notifications::database.modal.heading"
+msgstr ""
+
+#: storage/framework/views/a6746a5488bc67e00d3f875939421468.php:22
+#: storage/framework/views/c7f7a636a622fc9e41dfcfb77f69b6ca.php:97
+msgid "delete:confirm"
+msgstr ""
+
+#: storage/framework/views/a6746a5488bc67e00d3f875939421468.php:26
+#: storage/framework/views/c7f7a636a622fc9e41dfcfb77f69b6ca.php:104
+msgid "yes"
+msgstr ""
+
+#: storage/framework/views/a6746a5488bc67e00d3f875939421468.php:30
+#: storage/framework/views/c7f7a636a622fc9e41dfcfb77f69b6ca.php:109
+msgid "no"
+msgstr ""
+
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:35
+msgid "month:salas"
+msgstr ""
+
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:53
+msgid "total:salas"
+msgstr ""
+
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:73
+msgid "categories:salas"
+msgstr ""
+
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:115
+msgid "info"
+msgstr ""
+
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:141
+msgid "total:users"
+msgstr ""
+
+#: storage/framework/views/b7574de192037587b5c9eefcb6737ca6.php:187
+msgid "categories"
+msgstr ""
+
+#: storage/framework/views/bfd72c51e978b9ea7bbac2697778485c.php:127
+msgid "company"
+msgstr ""
+
+#: storage/framework/views/bfd72c51e978b9ea7bbac2697778485c.php:152
+msgid "customer:service"
+msgstr ""
+
+#: storage/framework/views/bfd72c51e978b9ea7bbac2697778485c.php:159
+msgid "support"
+msgstr ""
+
+#: storage/framework/views/bfd72c51e978b9ea7bbac2697778485c.php:165
+msgid "faqs"
+msgstr ""
+
+#: storage/framework/views/bfd72c51e978b9ea7bbac2697778485c.php:178
+msgid "terms"
+msgstr ""
+
+#: storage/framework/views/c16d2fa4e0f8292324dff2d48406fa24.php:27
+#: storage/framework/views/c16d2fa4e0f8292324dff2d48406fa24.php:46
+msgid "filament-tables::table.fields.bulk_select_group.label"
+msgstr ""
+
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:55
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:62
+msgid "products.count"
+msgstr ""
+
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:55
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:62
+msgid "products.price"
+msgstr ""
+
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:55
+#: storage/framework/views/c9a6858bbc9505b070cc976f004972f4.php:62
+msgid "products.discount:price"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:108
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:115
+msgid "filament-forms::components.rich_editor.toolbar_buttons.bold"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:146
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:153
+msgid "filament-forms::components.rich_editor.toolbar_buttons.italic"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:184
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:191
+msgid "filament-forms::components.rich_editor.toolbar_buttons.underline"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:222
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:229
+msgid "filament-forms::components.rich_editor.toolbar_buttons.strike"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:260
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:267
+msgid "filament-forms::components.rich_editor.toolbar_buttons.link"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:320
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:327
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:328
+msgid "filament-forms::components.rich_editor.toolbar_buttons.h1"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:345
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:352
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:353
+msgid "filament-forms::components.rich_editor.toolbar_buttons.h2"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:370
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:377
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:378
+msgid "filament-forms::components.rich_editor.toolbar_buttons.h3"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:417
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:424
+msgid "filament-forms::components.rich_editor.toolbar_buttons.blockquote"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:455
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:462
+msgid "filament-forms::components.rich_editor.toolbar_buttons.code_block"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:493
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:500
+msgid "filament-forms::components.rich_editor.toolbar_buttons.bullet_list"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:531
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:538
+msgid "filament-forms::components.rich_editor.toolbar_buttons.ordered_list"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:590
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:597
+msgid "filament-forms::components.rich_editor.toolbar_buttons.attach_files"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:649
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:656
+msgid "filament-forms::components.rich_editor.toolbar_buttons.undo"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:687
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:694
+msgid "filament-forms::components.rich_editor.toolbar_buttons.redo"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:742
+msgid "filament-forms::components.rich_editor.dialogs.link.label"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:746
+msgid "filament-forms::components.rich_editor.dialogs.link.placeholder"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:756
+msgid "filament-forms::components.rich_editor.dialogs.link.actions.link"
+msgstr ""
+
+#: storage/framework/views/c9e767a7c28b05fa893a405c7ba0a0db.php:763
+msgid "filament-forms::components.rich_editor.dialogs.link.actions.unlink"
+msgstr ""
+
+#: storage/framework/views/cb713b3f498549edc1f7df7fa1728c2e.php:9
+msgid "Delete Account?"
+msgstr ""
+
+#: storage/framework/views/cb713b3f498549edc1f7df7fa1728c2e.php:10
+msgid "You'll permanently loose your"
+msgstr ""
+
+#: storage/framework/views/cb713b3f498549edc1f7df7fa1728c2e.php:19
+msgid "Cancel"
+msgstr ""
+
+#: storage/framework/views/d1dafb1e155012fbee8aa27067b58367.php:94
+#: storage/framework/views/d1dafb1e155012fbee8aa27067b58367.php:97
+msgid "created:at:up"
+msgstr ""
+
+#: storage/framework/views/d1dafb1e155012fbee8aa27067b58367.php:102
+msgid "created:at:down"
+msgstr ""
+
+#: storage/framework/views/d1dafb1e155012fbee8aa27067b58367.php:107
+msgid "price:up"
+msgstr ""
+
+#: storage/framework/views/d1dafb1e155012fbee8aa27067b58367.php:112
+msgid "price:down"
+msgstr ""
+
+#: storage/framework/views/d2439efc102fc4b0bfb1e1edd6eb7f5c.php:37
+msgid "product:image:modal"
+msgstr ""
+
+#: storage/framework/views/d2439efc102fc4b0bfb1e1edd6eb7f5c.php:43
+msgid "product.color"
+msgstr ""
+
+#: storage/framework/views/d2439efc102fc4b0bfb1e1edd6eb7f5c.php:70
+msgid "product.images"
+msgstr ""
+
+#: storage/framework/views/d2439efc102fc4b0bfb1e1edd6eb7f5c.php:85
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:260
+msgid "all:images"
+msgstr ""
+
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:49
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:443
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:46
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:504
+msgid "product.add"
+msgstr ""
+
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:65
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:61
+msgid "product.base-info"
+msgstr ""
+
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:98
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:94
+msgid "product.info"
+msgstr ""
+
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:141
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:133
+msgid "product.colors"
+msgstr ""
+
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:176
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:164
+msgid "product.detail"
+msgstr ""
+
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:310
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:374
+msgid "product.select-size-image"
+msgstr ""
+
+#: storage/framework/views/d251e5db98643ff726c82296ad02765d.php:345
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:407
+#: app/Services/Admin/ProductService.php:93
+msgid "product.price"
+msgstr ""
+
+#: storage/framework/views/d31eb9db08237b5ca1445f1dfe876bf6.php:384
+msgid "not"
+msgstr ""
+
+#: storage/framework/views/d7c6b4e4bbc76a31a1063e85c848801b.php:8
+msgid "select:gender"
+msgstr ""
+
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:46
+msgid "users"
+msgstr ""
+
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:81
+#: app/Filament/Resources/NotificationResource.php:44
+#: app/Filament/Resources/OrderGroupResource.php:116
+#: app/Filament/Resources/ProductResource.php:201
+#: app/Filament/Resources/TagResource.php:34
+msgid "id"
+msgstr ""
+
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:84
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:170
+#: storage/framework/views/d7cda9d833fc8925557c29980cfd84ea.php:177
+msgid "role"
+msgstr ""
+
+#: storage/framework/views/e129829b6c9319fe4dd69e082beada9b.php:13
+msgid "filament-panels::pages/auth/register.actions.login.before"
+msgstr ""
+
+#: storage/framework/views/e1c82f35790f004c40f45b8db25bd2ca.php:64
+msgid "filament-tables::table.filters.actions.reset.label"
+msgstr ""
+
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:20
+msgid "change:banner"
+msgstr ""
+
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:48
+msgid "file:upload:error"
+msgstr ""
+
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:83
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:88
+#: app/Filament/Resources/BannerResource.php:33
+#: app/Filament/Resources/NotificationResource.php:33
+#: app/Filament/Resources/NotificationResource.php:45
+#: app/Filament/Resources/PagesResource.php:34
+#: app/Filament/Resources/PagesResource.php:58
+msgid "title"
+msgstr ""
+
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:92
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:97
+#: app/Filament/Resources/BannerResource.php:50
+msgid "link_text"
+msgstr ""
+
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:100
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:105
+#: app/Filament/Resources/BannerResource.php:34
+msgid "subtitle"
+msgstr ""
+
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:108
+#: storage/framework/views/e2a6f0121771c9e992af8eecbb99026c.php:113
+#: app/Filament/Resources/BannerResource.php:49
+msgid "link"
+msgstr ""
+
+#: storage/framework/views/e6db929365694a00bc3fa3fce7fcedf0.php:29
+msgid "filament-tables::table.filters.indicator"
+msgstr ""
+
+#: storage/framework/views/e6db929365694a00bc3fa3fce7fcedf0.php:49
+msgid "filament-tables::table.filters.actions.remove.label"
+msgstr ""
+
+#: storage/framework/views/e6db929365694a00bc3fa3fce7fcedf0.php:68
+#: storage/framework/views/e6db929365694a00bc3fa3fce7fcedf0.php:75
+msgid "filament-tables::table.filters.actions.remove_all.tooltip"
+msgstr ""
+
+#: storage/framework/views/e921ebfcd11698e06827616a61bc1ec8.php:5
+msgid "product:options"
+msgstr ""
+
+#: storage/framework/views/e921ebfcd11698e06827616a61bc1ec8.php:18
+#: app/Filament/Resources/OrderGroupResource.php:75
+#: app/Filament/Resources/ProductResource.php:151
+msgid "size"
+msgstr ""
+
+#: storage/framework/views/e921ebfcd11698e06827616a61bc1ec8.php:51
+msgid "back"
+msgstr ""
+
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:39
+#: app/Filament/Resources/OrderGroupResource.php:93
+msgid "region"
+msgstr ""
+
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:45
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:73
+msgid "select:option"
+msgstr ""
+
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:66
+#: app/Filament/Resources/OrderGroupResource.php:95
+msgid "district"
+msgstr ""
+
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:93
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:100
+msgid "additional"
+msgstr ""
+
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:105
+msgid "Yuborish"
+msgstr ""
+
+#: storage/framework/views/f4f2cb0304b11d31af27bc27ed4de75e.php:225
+msgid "order:created"
+msgstr ""
+
+#: storage/framework/views/f5f6fdda28ccc0f05b76c09c704c6d0f.php:12
+msgid ""
+"filament-panels::pages/auth/email-verification/email-verification-prompt."
+"messages.notification_sent"
+msgstr ""
+
+#: storage/framework/views/f5f6fdda28ccc0f05b76c09c704c6d0f.php:19
+msgid ""
+"filament-panels::pages/auth/email-verification/email-verification-prompt."
+"messages.notification_not_received"
+msgstr ""
+
+#: storage/framework/views/f65c0216f282c8004303e8dbc853870d.php:433
+msgid "wishlist"
+msgstr ""
+
+#: storage/framework/views/f65c0216f282c8004303e8dbc853870d.php:446
+msgid "sign:desc"
+msgstr ""
+
+#: storage/framework/views/f65c0216f282c8004303e8dbc853870d.php:453
+msgid "sign"
+msgstr ""
+
+#: storage/framework/views/f65c0216f282c8004303e8dbc853870d.php:474
+msgid "you:like"
+msgstr ""
+
+#: storage/framework/views/fd8c01b5cc00ac7857493d09505cf335.php:36
+msgid "filament-notifications::database.modal.actions.mark_all_as_read.label"
+msgstr ""
+
+#: storage/framework/views/fd8c01b5cc00ac7857493d09505cf335.php:60
+msgid "filament-notifications::database.modal.actions.clear.label"
+msgstr ""
+
+#: app/Models/BaseModel.php:27 app/Services/MainService.php:34
+#: app/Services/MainService.php:36
+msgid "not:found"
+msgstr ""
+
+#: app/Models/User.php:96
+msgid "None"
+msgstr ""
+
+#: app/Livewire/Admin/ProductCreate.php:69
+msgid "images:required"
+msgstr ""
+
+#: app/Livewire/Admin/ProductCreate.php:76
+msgid "image:required"
+msgstr ""
+
+#: app/Livewire/Admin/ProductCreate.php:83
+msgid "product:colors:required"
+msgstr ""
+
+#: app/Livewire/Admin/Product/Images.php:78
+msgid "Rasm yuklandi"
+msgstr ""
+
+#: app/Livewire/Admin/Product/Images.php:102
+msgid "Yangilanishlar saqlandi"
+msgstr ""
+
+#: app/Livewire/User/Auth.php:42 app/Livewire/User/Auth.php:94
+msgid "invalid:phone"
+msgstr ""
+
+#: app/Livewire/User/Auth.php:51 app/Livewire/User/Auth.php:71
+msgid "user:invalid"
+msgstr ""
+
+#: app/Livewire/User/Auth.php:103
+msgid "confirm:password:invalid"
+msgstr ""
+
+#: app/Livewire/User/Auth.php:125 app/Livewire/User/Auth.php:134
+msgid "user:already"
+msgstr ""
+
+#: app/Livewire/User/SizeCreate.php:29
+msgid "size:already"
+msgstr ""
+
+#: app/View/Components/Sidebar.php:61
+msgid "Admin v2"
+msgstr ""
+
+#: app/Jobs/SendSmsJob.php:34
+msgid "confirm:code"
+msgstr ""
+
+#: app/Http/Controllers/BaseCrudController.php:51
+msgid "delete:success"
+msgstr ""
+
+#: app/Http/Controllers/Api/Auth/AuthController.php:49
+#: app/Http/Controllers/Api/Auth/AuthController.php:81
+#: app/Http/Controllers/Api/Auth/AuthController.php:229
+msgid "sms.send:success"
+msgstr ""
+
+#: app/Http/Controllers/Api/Auth/AuthController.php:132
+msgid "sms.confirm"
+msgstr ""
+
+#: app/Http/Controllers/Api/Auth/AuthController.php:138
+msgid "invalid:error"
+msgstr ""
+
+#: app/Http/Controllers/Api/Auth/AuthController.php:161
+msgid "invalid:password"
+msgstr ""
+
+#: app/Http/Controllers/Api/Auth/AuthController.php:208
+msgid "user.update:profile"
+msgstr ""
+
+#: app/Http/Controllers/Api/Auth/AuthController.php:255
+msgid "reset:password:done"
+msgstr ""
+
+#: app/Http/Controllers/Api/Auth/AuthController.php:258
+msgid "reset:password:error"
+msgstr ""
+
+#: app/Http/Controllers/Api/Auth/AuthController.php:279
+msgid "set:password:done"
+msgstr ""
+
+#: app/Http/Controllers/Api/Auth/AuthController.php:295
+msgid "updated:fcm"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/BasketController.php:51
+msgid "product.basket:create"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/BasketController.php:53
+msgid "product.basket:error"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/BasketController.php:67
+msgid "updated"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/BasketController.php:110
+msgid "product.basket:delete"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/BasketController.php:127
+msgid "product.basket:clear"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/LikeController.php:34
+msgid "product.save:already"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/LikeController.php:39
+msgid "product.save:create"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/LikeController.php:41
+msgid "product.save:error"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/LikeController.php:70
+msgid "product.save:detach"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/OrderController.php:41
+msgid "product.order:create"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/OrderController.php:45
+msgid "product.order:error"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/OrderController.php:74
+msgid "product.order:cancel"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/ProductController.php:123
+msgid "Maxsulot topildi"
+msgstr ""
+
+#: app/Http/Controllers/Api/V1/ProductController.php:127
+msgid "Maxsulot mavjud emas"
+msgstr ""
+
+#: app/Services/AuthService.php:25 app/Services/AuthService.php:27
+#: app/Rules/PhoneMaskRule.php:20 app/Rules/PhoneRule.php:19
+msgid "phone:invalid"
+msgstr ""
+
+#: app/Services/ProductService.php:63
+msgid "price.filter:error"
+msgstr ""
+
+#: app/Services/Admin/DashboardService.php:34
+msgid "total:orders"
+msgstr ""
+
+#: app/Services/Admin/DashboardService.php:39
+msgid "success:orders"
+msgstr ""
+
+#: app/Services/Admin/DashboardService.php:44
+msgid "pending:orders"
+msgstr ""
+
+#: app/Services/Admin/DashboardService.php:49
+msgid "canceled:orders"
+msgstr ""
+
+#: app/Services/Admin/ProductService.php:61
+msgid "product.name"
+msgstr ""
+
+#: app/Services/Admin/ProductService.php:65
+msgid "product.count"
+msgstr ""
+
+#: app/Services/Admin/ProductService.php:69
+msgid "product.bought"
+msgstr ""
+
+#: app/Services/Admin/ProductService.php:73
+msgid "product.sizes"
+msgstr ""
+
+#: app/Services/Admin/ProductService.php:77
+msgid "product.likes"
+msgstr ""
+
+#: app/Services/Admin/ProductService.php:97
+msgid "product.discount"
+msgstr ""
+
+#: app/Services/Sms/SmsService.php:31
+msgid "phone:block:resend"
+msgstr ""
+
+#: app/Services/Sms/SmsService.php:82 app/Services/Sms/SmsService.php:104
+msgid "sms:invalid:code"
+msgstr ""
+
+#: app/Services/Sms/SmsService.php:87
+msgid "sms:time:expired"
+msgstr ""
+
+#: app/Services/Sms/SmsService.php:92
+msgid "phone:block:try"
+msgstr ""
+
+#: app/Services/Api/OrderService.php:30
+msgid "Cashback yetarli emas"
+msgstr ""
+
+#: app/Filament/Resources/BannerResource.php:25
+msgid "navigation:banner"
+msgstr ""
+
+#: app/Filament/Resources/BannerResource.php:39
+msgid "active"
+msgstr ""
+
+#: app/Filament/Resources/BannerResource.php:40
+msgid "not-active"
+msgstr ""
+
+#: app/Filament/Resources/BannerResource.php:44
+msgid "top"
+msgstr ""
+
+#: app/Filament/Resources/BannerResource.php:45
+msgid "bottom"
+msgstr ""
+
+#: app/Filament/Resources/BannerResource.php:54
+msgid "type"
+msgstr ""
+
+#: app/Filament/Resources/CategoryResource.php:29
+msgid "navigation:category"
+msgstr ""
+
+#: app/Filament/Resources/CategoryResource.php:44
+#: app/Filament/Resources/CategoryResource.php:63
+msgid "sortby"
+msgstr ""
+
+#: app/Filament/Resources/ColorResource.php:22
+msgid "navigation:colors"
+msgstr ""
+
+#: app/Filament/Resources/DeliveryResource.php:22
+msgid "navigation:delivery"
+msgstr ""
+
+#: app/Filament/Resources/NotificationResource.php:23
+msgid "navigation:messages"
+msgstr ""
+
+#: app/Filament/Resources/NotificationResource.php:34
+#: app/Filament/Resources/NotificationResource.php:46
+msgid "message"
+msgstr ""
+
+#: app/Filament/Resources/NotificationResource.php:35
+#: app/Filament/Resources/NotificationResource.php:47
+msgid "Is Register"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:27
+msgid "navigation:orders"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:36
+msgid "Cancelled"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:37
+msgid "Pending"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:38
+msgid "Succeeded"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:39
+msgid "Delivered"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:46
+msgid "user_id"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:48
+#: app/Filament/Resources/OrderGroupResource.php:123
+msgid "given_cashback"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:77
+msgid "Show Product"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:92
+#: app/Filament/Resources/SettingsResource.php:31
+#: app/Filament/Resources/SettingsResource.php:42
+msgid "label"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:98
+msgid "Show Address"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:106
+msgid "delivery_date"
+msgstr ""
+
+#: app/Filament/Resources/OrderGroupResource.php:117
+msgid "user"
+msgstr ""
+
+#: app/Filament/Resources/PagesResource.php:23
+msgid "navigation:pages"
+msgstr ""
+
+#: app/Filament/Resources/PagesResource.php:35
+#: app/Filament/Resources/PagesResource.php:59
+msgid "path"
+msgstr ""
+
+#: app/Filament/Resources/PagesResource.php:47
+msgid "content"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:44
+msgid "navigation:products"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:53
+msgid "desc"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:56
+msgid "is:active"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:67
+msgid "tags"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:72
+msgid "brand"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:88
+msgid "offers"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:109
+msgid "MALE"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:110
+msgid "FEMALE"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:116
+msgid "AVAILABLE"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:117
+msgid "EXPECTED"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:118
+msgid "NOT_AVAILABLE"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:128
+#: app/Filament/Resources/ProductResource.php:138
+msgid "Описание продукта"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:131
+#: app/Filament/Resources/ProductResource.php:133
+msgid "заголовок"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:132
+msgid "Описание о заголовке"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:160
+msgid "options"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:177
+msgid "colors"
+msgstr ""
+
+#: app/Filament/Resources/ProductResource.php:192
+msgid "images"
+msgstr ""
+
+#: app/Filament/Resources/SettingsResource.php:22
+msgid "navigation:settings"
+msgstr ""
+
+#: app/Filament/Resources/SizeResource.php:23
+msgid "navigation:size"
+msgstr ""
+
+#: app/Filament/Resources/SubCategoryResource.php:28
+msgid "navigation:subcategory"
+msgstr ""
+
+#: app/Filament/Resources/UserResource.php:23
+msgid "navigation:users"
+msgstr ""
+
+#: app/Filament/Resources/UserResource.php:46
+msgid "is_first_order"
+msgstr ""
+
+#: app/Observers/OrderGroupObserver.php:29
+msgid ""
+"Yangi buyurtma: 💵\n"
+"\n"
+"Buyurtma: <a href=':order'>#:order_id</a>\n"
+"Manzil: :address\n"
+"To'lov turi: :payment_type"
+msgstr ""

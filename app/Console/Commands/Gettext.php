@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Gettext\Loader\PoLoader;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\File;
+use JetBrains\PhpStorm\NoReturn;
+use Symfony\Component\Process\Process;
+
+class Gettext extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'gettext:update {--ignore=0}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Scanner gettext';
+
+    public function rglob($pattern, $flags = 0): bool|array
+    {
+        $files = glob($pattern, $flags);
+        foreach (glob(dirname($pattern) . '/*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir) {
+            $files = array_merge(
+                [],
+                ...[$files, $this->rglob($dir . '/' . basename($pattern), $flags)]
+            );
+        }
+
+        return $files;
+    }
+
+    /**
+     * Execute the console command.
+     */
+    #[NoReturn]
+    public function handle(): void
+    {
+        Artisan::call('view:cache');
+        $this->info('View files cached');
+        $ignore = $this->option('ignore');
+        $files = []; // All files
+        $loader = new PoLoader();
+
+        $paths = [
+            'storage/framework/views',
+            'app',
+            'config',
+            'Modules',
+            'resources/views',
+        ]; // Scanner path
+
+        foreach ($paths as $path) {
+            $fs = $this->rglob($path . '**/*.php');
+            $files = array_merge($files, $fs);
+        }
+        $command = new Process(['xgettext', '--from-code=UTF-8', '--keyword=__', '-o', 'lang/messages.po', ...$files]);
+        $command->run(function ($type, $buffer) {
+            if (Process::ERR === $type) {
+                $this->error('ERR > ' . trim($buffer));
+                $this->info('If gettext, install: sudo apt install gettext');
+                dd();
+            } else {
+                $this->info('OUT > ' . trim($buffer));
+            }
+        });
+        $response = $loader->loadFile('lang/messages.po')->toArray()['translations'];
+        $messages = [];
+        $languages = Config::get('app.locales', ['uz', 'en', 'ru']);
+        foreach ($languages as $language) {
+            $this->warn("==============\nStart: $language");
+
+            try {
+                $old = json_decode(File::get(base_path("lang/gettext/$language.json")), true);
+            } catch (\Throwable $e) {
+                $old = [];
+            }
+
+            foreach ($response as $message) {
+                $res = $message['original'];
+                if ($ignore != 0) {
+                    if (preg_match("/$ignore/", $res)) {
+                        continue;
+                    }
+                }
+                $messages[$res] = $old[$res] ?? '';
+            }
+            File::put(base_path("lang/gettext/$language.json"), json_encode($messages, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            $this->info("Success: $language\n==============\n");
+        }
+        Artisan::call('view:clear');
+        $this->info('Cache clear');
+    }
+}

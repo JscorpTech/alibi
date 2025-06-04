@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAwqBF_jKv5bcYRZ-NmsJBhuZcejcp6fqg",
+        authDomain: "alibiazizaka.firebaseapp.com",
+        projectId: "alibiazizaka",
+        storageBucket: "alibiazizaka.appspot.com",
+        messagingSenderId: "1080844951968",
+        appId: "1:1080844951968:web:cc1f9bddbb40cc7e5144c5",
+        measurementId: "G-YZLZ6J997R"
+    };
+
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/8.2.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.2.0/firebase-messaging.js"></script>
+
+<script>
+    // Firebase loyihasi konfiguratsiyasini boshlash
+    firebase.initializeApp(firebaseConfig);
+
+    // Firebase Messaging obyektini olish
+    const messaging = firebase.messaging();
+
+</script>
+<script>
+    Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+            console.log('Notification permission granted.');
+            messaging.getToken({vapidKey:"BBKl_LXm2mzxik22J8HRyQgSQBVnJsf2eKvy-LW6oZP0KYKK8LdWVBpCQqb7fRilU_uML2xFSHJKZf0Gw8Ht5zg"}).then((currentToken) => {
+                if (currentToken) {
+                    console.log('Token:', currentToken);
+                } else {
+                    console.log('No registration token available. Request permission to generate one.');
+                }
+            }).catch((err) => {
+                console.log('An error occurred while retrieving token. ', err);
+            });
+            messaging.onMessage()
+        } else {
+            console.log('Unable to get permission to notify.');
+        }
+    });
+
+</script>
+
+</body>
+</html>
+

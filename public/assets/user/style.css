@@ -1,0 +1,16 @@
+#shopify-section-main-header svg path{
+
+}
+
+
+#shopify-section-main-header{
+    background-color: white !important;
+}
+
+
+.clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}

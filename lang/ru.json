@@ -1,0 +1,32 @@
+{
+    "order.index": "Заказы",
+    "user.index": "Пользователи",
+    "product.index": "Продукты",
+    "product.create": "Добавить продукт",
+    "category.index": "Категории",
+    "category.create": "Добавить категорию",
+    "category.subcategory": "Подкатегория",
+    "settings.size": "Размер",
+    "settings.color": "Цвет",
+    "settings.banners": "Баннер",
+    "settings.settings": "Слова",
+    "settings.sizes": "Картинка по размеру",
+    "name_uz": "Латинский",
+    "name_ru": "Русский",
+    "name_kr": "Кирилский",
+    "desc_uz": "Описание Латинский",
+    "desc_ru": "Описание Русский",
+    "desc_kr": "Описание Кирилский",
+    "male": "Мужской",
+    "female": "Женский",
+    "available": "Имеется",
+    "not-found": "Нет в наличии",
+    "expected": "Ожидается",
+    "confirm:code": "Код подтверждения для регистрации мобильном приложение и сайте alibi: :code",
+    "delivered":"Доставленный",
+    "pending":"Ожидающий",
+    "success":"Подтвержденный",
+    "canceled":"Отменено"
+}
+
+
