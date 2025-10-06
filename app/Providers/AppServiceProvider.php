@@ -6,6 +6,7 @@ use Illuminate\Support\Env;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Blade;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,5 +29,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('auth', function () {
             return Auth::check();
         });
+
+       Blade::if('feature', fn($name) => config("feature.$name") === true);
     }
 }
