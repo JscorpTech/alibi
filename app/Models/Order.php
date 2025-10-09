@@ -21,6 +21,7 @@ class Order extends Model
         'size_id',
         'discount',
         'order_group_id',
+        'original_order_id', // NEW
     ];
 
     /**

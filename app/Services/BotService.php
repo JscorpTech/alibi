@@ -10,7 +10,7 @@ use SergiX44\Nutgram\Nutgram;
 
 class BotService
 {
-    public $bot;
+    protected Nutgram $bot;
 
     /**
      * @throws ContainerExceptionInterface
@@ -18,12 +18,43 @@ class BotService
      */
     public function __construct()
     {
-        $this->bot = new Nutgram(Env::get('TELEGRAM_TOKEN'));
+        $token = Env::get('TELEGRAM_TOKEN');
+        $this->bot = new Nutgram($token);
     }
 
-    public function sendMessage($chatId, $message): void
+    /**
+     * Отправка сообщения с автонормализацией chat_id
+     */
+    public function sendMessage(?string $chatId, string $message): void
     {
-        $this->bot->sendMessage($message, $chatId, parse_mode: 'HTML');
-        Log::info($message);
+        $chatId = $this->normalizeChannelId($chatId);
+
+        try {
+            $this->bot->sendMessage($message, $chatId, parse_mode: 'HTML');
+            Log::info('Telegram message sent: '.$message);
+        } catch (\Throwable $e) {
+            Log::error('Telegram send failed: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Автоматическая нормализация chat_id (чтобы не было ошибок "chat not found")
+     */
+    private function normalizeChannelId(?string $id): ?string
+    {
+        if (!$id) return null;
+        $id = trim((string)$id);
+
+        // если id начинается с 100..., добавляем -100
+        if (!str_starts_with($id, '-100') && preg_match('/^100\d+$/', $id)) {
+            return '-'.$id;
+        }
+
+        // если просто цифры без минуса — добавляем минус
+        if (!str_starts_with($id, '-') && ctype_digit($id)) {
+            return '-'.$id;
+        }
+
+        return $id;
     }
 }

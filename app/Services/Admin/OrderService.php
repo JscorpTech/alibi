@@ -76,7 +76,7 @@ class OrderService
             $categories = Category::query()->get();
 
             return [
-                'orders'     => $orders,
+                'orders' => $orders,
                 'categories' => $categories,
             ];
         }, $filter);
@@ -98,15 +98,28 @@ class OrderService
 
     public static function editProductOption($orderGroup, $action = 'add'): void
     {
-        $orders = $orderGroup->orders;
-        foreach ($orders as $order) {
-            $option = ProductOption::query()->where(['color_id' => $order->color->id, 'size_id' => $order->size->id, 'product_id' => $order->product->id]);
-            if ($option->exists()) {
-                if ($action == 'remove') {
-                    $option->update(['count' => $option->first()->count - $order->count]);
-                } else {
-                    $option->update(['count' => $option->first()->count + $order->count]);
-                }
+        foreach ($orderGroup->orders as $order) {
+            // если чего-то нет — пропускаем позицию
+            if (empty($order->product_id) || empty($order->color_id) || empty($order->size_id)) {
+                continue;
+            }
+
+            $optionQ = \App\Models\ProductOption::query()->where([
+                'product_id' => $order->product_id,
+                'color_id' => $order->color_id,
+                'size_id' => $order->size_id,
+            ]);
+
+            if (!$optionQ->exists()) {
+                continue;
+            }
+
+            $current = (int) ($optionQ->first()->count ?? 0);
+
+            if ($action === 'remove') {
+                $optionQ->update(['count' => $current - (int) $order->count]);
+            } else {
+                $optionQ->update(['count' => $current + (int) $order->count]);
             }
         }
     }

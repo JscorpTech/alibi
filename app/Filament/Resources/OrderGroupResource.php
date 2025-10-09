@@ -16,8 +16,18 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Log;
 
+use Illuminate\Database\Eloquent\Builder;
+
+
+
 class OrderGroupResource extends Resource
 {
+
+    public static function getEloquentQuery(): Builder
+    {
+        // Без глобальных скоупов и без фильтра по source — видим всё (app + pos)
+        return parent::getEloquentQuery()->withoutGlobalScopes();
+    }
     protected static ?string $model = OrderGroup::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path-rounded-square';
@@ -34,9 +44,9 @@ class OrderGroupResource extends Resource
                 Forms\Components\Section::make()->schema([
                     Forms\Components\Select::make('status')->options([
                         OrderStatusEnum::CANCELED => __("Cancelled"),
-                        OrderStatusEnum::PENDING  => __("Pending"),
-                        OrderStatusEnum::SUCCESS  => __("Succeeded"),
-                        OrderStatusEnum::DELIVERED  => __("Delivered"),
+                        OrderStatusEnum::PENDING => __("Pending"),
+                        OrderStatusEnum::SUCCESS => __("Succeeded"),
+                        OrderStatusEnum::DELIVERED => __("Delivered"),
                     ])->required()->label(__('status')),
 
                     Forms\Components\Select::make('user_id')
@@ -116,14 +126,30 @@ class OrderGroupResource extends Resource
                 Tables\Columns\TextColumn::make('id')->label(__('id')),
                 Tables\Columns\TextColumn::make('user.phone')->label(__('user')),
                 Tables\Columns\TextColumn::make('address.label')->label(__('address')),
-                Tables\Columns\TextColumn::make('status')->label(__('status'))->state(function(OrderGroup $record){
+                Tables\Columns\TextColumn::make('status')->label(__('status'))->state(function (OrderGroup $record) {
                     return __($record->status);
                 }),
+                Tables\Columns\BadgeColumn::make('source')
+                    ->label('Источник')
+                    ->colors([
+                        'primary' => fn($state) => $state === 'app',
+                        'success' => fn($state) => $state === 'pos',
+                    ])
+                    ->formatStateUsing(fn(?string $state) => $state === 'pos' ? 'POS касса' : 'Приложение'),
                 Tables\Columns\TextColumn::make('cashback')->label(__('cashback')),
                 Tables\Columns\TextColumn::make('given_cashback')->label(__('given_cashback')),
             ])
+
             ->filters([
-                Tables\Filters\SelectFilter::make('status')->options(OrderStatusEnum::toObject())->label(__('status')),
+                Tables\Filters\SelectFilter::make('status')
+                    ->options(\App\Enums\OrderStatusEnum::toObject())
+                    ->label(__('status')),
+                Tables\Filters\SelectFilter::make('source')
+                    ->label('Источник')
+                    ->options([
+                        'app' => 'Приложение',
+                        'pos' => 'POS касса',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -147,10 +173,10 @@ class OrderGroupResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListOrderGroups::route('/'),
+            'index' => Pages\ListOrderGroups::route('/'),
             'create' => Pages\CreateOrderGroup::route('/create'),
-            'edit'   => Pages\EditOrderGroup::route('/{record}/edit'),
-            'view'   => Pages\EditOrderGroup::route('/{record}/view'),
+            'edit' => Pages\EditOrderGroup::route('/{record}/edit'),
+            'view' => Pages\EditOrderGroup::route('/{record}/view'),
         ];
     }
 }

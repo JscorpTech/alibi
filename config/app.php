@@ -83,9 +83,9 @@ return [
     |
     */
 
-    'locale'  => 'ru',
+    'locale' => 'ru',
     'locales' => [
-//        "uz",
+        //        "uz",
 //        "kr",
         'ru',
     ],
@@ -176,6 +176,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\TelescopeServiceProvider::class,
         Kreait\Laravel\Firebase\ServiceProvider::class,
+        Milon\Barcode\BarcodeServiceProvider::class,
 
     ])->toArray(),
 
@@ -192,7 +193,9 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         // 'Example' => App\Facades\Example::class,
-            'Firebase' => Kreait\Laravel\Firebase\Facades\Firebase::class,
+        'Firebase' => Kreait\Laravel\Firebase\Facades\Firebase::class,
+        'DNS1D' => Milon\Barcode\Facades\DNS1DFacade::class,
+        'DNS2D' => Milon\Barcode\Facades\DNS2DFacade::class,
     ])->toArray(),
 
 ];

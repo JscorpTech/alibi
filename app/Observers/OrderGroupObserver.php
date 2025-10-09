@@ -13,30 +13,55 @@ use Illuminate\Support\Facades\DB;
 
 class OrderGroupObserver
 {
-    public function created(OrderGroup $orderGroup)
+    public function created(OrderGroup $orderGroup): void
     {
-        $service = new BotService();
-        $orderGroup->user()->update([
-            'is_first_order' => false,
-        ]);
-        $user = Auth::user();
-        $user->balance -= $orderGroup->cashback;
-        $user->save();
+        try {
+            // подгрузим связи, если нужны
+            $orderGroup->loadMissing(['user', 'address']);
 
-        $service->sendMessage(
-            Env::get('ADMIN_CHAT_ID'),
-            __(
-                "Yangi buyurtma: 💵\n\nBuyurtma: <a href=':order'>#:order_id</a>\nManzil: :address\nTo'lov turi: :payment_type",
-                [
-                    'order' => route('filament.admin.resources.order-groups.view', [
-                        'record' => $orderGroup->id,
-                    ]),
-                    'address'      => $orderGroup->address->label,
-                    'payment_type' => __($orderGroup->payment_type),
-                    'order_id'     => $orderGroup->id,
-                ]
-            ),
-        );
+            // помечаем первого заказа — если есть пользователь
+            if ($orderGroup->user) {
+                $orderGroup->user->update(['is_first_order' => false]);
+            }
+
+            // баланс текущего аутентифицированного пользователя (если используется кэшбэк)
+            if (!empty($orderGroup->cashback) && auth()->check()) {
+                $u = auth()->user();
+                $u->balance = max(0, (int) $u->balance - (int) $orderGroup->cashback);
+                $u->save();
+            }
+
+            // ⚠️ POS — ничего не шлём в общий канал, выходим РАНО
+            if (($orderGroup->source ?? null) === 'pos') {
+                return;
+            }
+
+            // безопасные значения для полей, которых может не быть
+            $addressLabel = optional($orderGroup->address)->label ?? 'Без адреса';
+            $payment = $orderGroup->payment_method
+                ?? $orderGroup->payment_type
+                ?? 'Не указан';
+
+            $url = route('filament.admin.resources.order-groups.view', [
+                'record' => $orderGroup->id,
+            ]);
+
+            (new \App\Services\BotService())->sendMessage(
+                env('ADMIN_CHAT_ID'),
+                __(
+                    "Yangi buyurtma: 💵\n\nBuyurtma: <a href=':order'>#:order_id</a>\nManzil: :address\nTo'lov turi: :payment_type",
+                    [
+                        'order' => $url,
+                        'order_id' => $orderGroup->id,
+                        'address' => $addressLabel,
+                        'payment_type' => $payment,
+                    ]
+                )
+            );
+        } catch (\Throwable $e) {
+            \Log::error('OrderGroupObserver.created failed: ' . $e->getMessage(), ['order_group_id' => $orderGroup->id]);
+            // Не бросаем исключение, чтобы оплата не падала из-за Telegram
+        }
     }
 
     public function updated(OrderGroup $orderGroup)

@@ -16,6 +16,8 @@ use App\Livewire\Admin\Settings\DataList;
 use App\Livewire\Admin\SizeInfo;
 use App\Livewire\Admin\SubCategory;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\PosController;
+use App\Http\Controllers\LabelPrintController;
 
 Route::middleware('guest')->group(function () {
     Route::get('login/', [LoginController::class, 'index'])->name('login');
@@ -41,4 +43,18 @@ Route::middleware(['auth', 'role:' . RoleEnum::ADMIN])->group(function () {
     Route::get('settings/', DataList::class)->name('settings.index');
     Route::get('size-info/', SizeInfo::class)->name('size.info');
     Route::get('product/images/{id}', Images::class)->name('product.images');
+
+    // 👉 POS (включается только если FEATURE_POS=true)
+    // 👉 POS (включается только если FEATURE_POS=true)
+    if (config('feature.pos') === true) {
+        Route::get('pos', [PosController::class, 'index'])->name('pos.index');
+        Route::post('pos/scan', [PosController::class, 'scan'])->name('pos.scan');
+        Route::post('pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
+    }
+
+    // 👉 Печать штрих-кодов
+
+    Route::get('print/barcode/{product}', [LabelPrintController::class, 'one'])->name('print.barcode');
+    Route::get('print/barcodes', [LabelPrintController::class, 'many'])->name('print.barcodes');
+
 });

@@ -1,0 +1,56 @@
+/* 1) СНАЧАЛА импорт шрифта */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* 2) Затем Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .fi-topbar { @apply bg-black/60 backdrop-blur-xl border-0 text-white; }
+  .fi-sidebar { @apply bg-black/60 backdrop-blur-xl border-0 text-white; }
+  .fi-section { @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl; }
+  .fi-btn { @apply rounded-xl; }
+  .fi-link { @apply text-pink-400 hover:text-pink-300; }
+}
+/* ===== FileUpload: центрируем «+» и убираем текст ===== */
+
+/* Карточка загрузки: задаём фикс. высоту (совпадает с imagePreviewHeight) */
+[data-plus] .filepond--root { position: relative; height: var(--box-h, 120px); }
+[data-plus] .filepond--panel-root { height: 100% !important; }
+
+/* Дроп-зона во всю карточку */
+[data-plus] .filepond--drop-label{
+  position: absolute; inset: 0;
+  display:flex; align-items:center; justify-content:center;
+  padding:0 !important; margin:0 !important;
+  background: transparent !important; border: 0 !important;
+}
+[data-plus] .filepond--drop-label label{
+  position:relative; width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0; /* скрыть текст «перетащите…» */
+}
+
+/* Сам «+» — всегда по центру */
+[data-plus] .filepond--drop-label label::before{
+  content:'+';
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:56px; height:56px; border-radius:12px;
+  border:1px dashed #475569;
+  background:#f8fafc; color:#0f172a;
+  font-size:34px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  transition:.2s;
+}
+[data-plus] .filepond--drop-label:hover label::before{
+  background:#e2e8f0; border-color:#334155;
+}
+
+/* Тёмная тема */
+:root.dark [data-plus] .filepond--drop-label label::before{
+  background:#1e293b; border-color:#475569; color:#f8fafc;
+}
+:root.dark [data-plus] .filepond--drop-label:hover label::before{
+  background:#334155; border-color:#94a3b8;
+}

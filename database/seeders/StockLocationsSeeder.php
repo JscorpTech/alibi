@@ -14,12 +14,12 @@ class StockLocationsSeeder extends Seeder
     {
         DB::table('stock_locations')->updateOrInsert(
             ['code' => 'warehouse'],
-            ['name' => 'Склад']
+            ['name' => 'Склад', 'type' => 'warehouse']
         );
 
         DB::table('stock_locations')->updateOrInsert(
             ['code' => 'store_1'],
-            ['name' => 'Магазин ТЦ']
+            ['name' => 'Магазин ТЦ', 'type' => 'store']
         );
     }
 }
