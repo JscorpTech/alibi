@@ -24,6 +24,11 @@ class Order extends Model
         'original_order_id', // NEW
     ];
 
+    public function variant()
+    {
+        return $this->belongsTo(\App\Models\Variant::class);
+    }
+
     /**
      * @return float|int
      *
