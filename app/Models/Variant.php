@@ -16,7 +16,7 @@ class Variant extends Model
         'stock',
         'price',
         'attrs',
-        'image',
+
         'available',
     ];
 
@@ -27,6 +27,15 @@ class Variant extends Model
         'stock' => 'integer',
     ];
 
+
+    public function getSize(): ?string
+    {
+        return $this->attrs['Size'] ?? null;
+    }
+    public function getColor(): ?string
+    {
+        return $this->attrs['Color'] ?? null;
+    }
     /* Связи */
     public function product()
     {
@@ -47,12 +56,46 @@ class Variant extends Model
     /* Синхроним available со stock автоматически */
     protected static function booted(): void
     {
+        // 1) Генерим штрихкод только если пустой
+        static::creating(function (self $v) {
+            if (empty($v->barcode)) {
+                do {
+                    $code = (string) random_int(1000000000000, 9999999999999);
+                } while (
+                    \DB::table('variants')->where('barcode', $code)->exists() ||
+                    \DB::table('products')->where('barcode', $code)->exists()
+                );
+                $v->barcode = $code;
+            }
+
+        });
+
+        static::created(function (self $v) {
+            $color = $v->attr('Color');
+            if ($color && !empty($v->image)) {
+                self::where('product_id', $v->product_id)
+                    ->where('id', '!=', $v->id)
+                    ->whereNull('image')
+                    ->whereRaw("attrs ->> 'Color' = ?", [$color])
+                    ->update(['image' => $v->image]);
+            }
+        });
+
+        // 3) available синхронизируем со stock (как было)
         static::saving(function (self $v) {
-            // если available явно не передали — выставим по stock
             if ($v->isDirty('stock') && !$v->isDirty('available')) {
                 $v->available = (int) $v->stock > 0;
             }
         });
+    }
+    // app/Models/Variant.php
+    public function getImageAttribute($value)
+    {
+        if (empty($value))
+            return null;
+        if (is_array($value))
+            return $value;
+        return ['path' => $value];
     }
 
     /* Хелперы */

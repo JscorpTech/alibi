@@ -1,0 +1,249 @@
+{{-- resources/views/filament/products/variant-options-shopify.blade.php --}}
+@php
+    $sizeOptions  = \App\Models\Size::query()->orderBy('name')->pluck('name')->values();
+    $colorOptions = \App\Models\Color::query()->orderBy('name')->pluck('name')->values();
+@endphp
+
+<div
+  class="rounded-xl border border-gray-200 bg-white p-4 space-y-4"
+  x-data="shopifyOptionsWithSuggest({
+      Size:  @json($sizeOptions),
+      Color: @json($colorOptions),
+  })"
+  x-init="init()"
+>
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-sm font-semibold">Опции товара</h3>
+      <p class="text-xs text-gray-500">Добавьте Size/Color. Значения выбирайте из подсказок или вводите и жмите Enter.</p>
+    </div>
+
+    <div class="relative" x-data="{open:false}">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+        :disabled="availableNames().length === 0"
+        @click="open = !open"
+      >
+        <svg width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 1.5a.75.75 0 01.75.75V7.25H14a.75.75 0 010 1.5H8.75V14a.75.75 0 01-1.5 0V8.75H2a.75.75 0 010-1.5h5.25V2.25A.75.75 0 018 1.5z"/></svg>
+        Добавить опцию
+      </button>
+
+      <div x-show="open" x-cloak @click.away="open=false"
+           class="absolute right-0 mt-2 w-40 rounded-md border bg-white shadow-md overflow-hidden">
+        <template x-for="n in availableNames()" :key="n">
+          <button type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                  @click="addAxis(n); open=false" x-text="n"></button>
+        </template>
+        <template x-if="availableNames().length === 0">
+          <div class="px-3 py-2 text-sm text-gray-500">Нет доступных</div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <template x-for="(ax, i) in axes" :key="i">
+    <div class="rounded-lg border p-3">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-gray-500">Опция</label>
+          <select
+            class="rounded-md border px-2 py-1 text-sm"
+            x-model="axes[i].name"
+            @change="normalizeAxis(i); refreshSuggest(i)"
+          >
+            <template x-for="n in allNames" :key="n">
+              <option :value="n" x-text="n" :disabled="isNameTaken(n, i)"></option>
+            </template>
+          </select>
+        </div>
+
+        <button type="button" class="text-xs text-red-600 hover:underline" @click="removeAxis(i)">
+          Удалить
+        </button>
+      </div>
+
+      <div class="mt-3 relative">
+        <label class="text-xs text-gray-500">Значения</label>
+
+        <div class="mt-1 flex flex-wrap gap-2 rounded-md border px-2 py-2"
+             @click="$refs['val'+i].focus()">
+          <template x-if="axes[i].values.length === 0">
+            <span class="text-xs text-gray-400">например: 41, 42, 43</span>
+          </template>
+
+          <template x-for="(v, vi) in axes[i].values" :key="v">
+            <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
+              <span x-text="v"></span>
+              <button type="button" class="opacity-60 hover:opacity-100" @click="removeValue(i, v)">×</button>
+            </span>
+          </template>
+
+          <input
+            class="flex-1 min-w-[10rem] outline-none text-sm"
+            :ref="'val'+i"
+            type="text"
+            placeholder="Введите и Enter"
+            x-model="inputs[i]"
+            @input="onInput(i)"
+            @keydown.enter.prevent="commitFromSuggest(i)"
+            @keydown.tab.prevent="commitFromSuggest(i)"
+            @keydown.,.prevent="commitFromSuggest(i)"
+            @blur="commitFree(i)"
+          />
+        </div>
+
+        <!-- Выпадающие подсказки -->
+        <div x-show="suggest[i]?.list?.length" x-cloak
+             class="absolute z-10 mt-1 w-full rounded-md border bg-white shadow">
+          <template x-for="(s, si) in suggest[i].list" :key="s">
+            <button type="button"
+                    class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex justify-between"
+                    @click="addValue(i, s); inputs[i]=''; suggest[i].list=[]; push()">
+              <span x-text="s"></span>
+              <span class="text-gray-400 text-xs">Enter</span>
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <input type="hidden" name="variant_state[variant_options]" :value="json(axes)">
+</div>
+
+<script>
+function shopifyOptionsWithSuggest(dict = {}) {
+  return {
+    allNames: ['Size','Color'],
+    catalog: dict,             // { Size: [...], Color: [...] }
+    axes: [],
+    inputs: {},                // per-axis text input
+    suggest: {},               // per-axis { list: [...] }
+
+    init() {
+      const cur = this.getWire('data.variant_state.variant_options');
+      this.axes = Array.isArray(cur) ? cur.map(a => ({
+        name: this.canonName(a?.name),
+        values: Array.isArray(a?.values) ? [...new Set(a.values.map(v => String(v).trim()).filter(Boolean))] : []
+      })) : [];
+      // подготовить стейт подсказок
+      this.axes.forEach((_, i) => { this.inputs[i] = ''; this.refreshSuggest(i); });
+      this.push();
+    },
+
+    // Livewire helpers
+    getWire(key){ try{ return $wire?.$get?.(key) }catch{ return null } },
+    setWire(key,val){ try{ return $wire?.$set?.(key,val) }catch{ return null } },
+
+    // utils
+    canonName(n){
+      if(!n) return this.allNames[0];
+      const map = { size:'Size', colour:'Color', color:'Color', Colour:'Color' };
+      const k = String(n).trim();
+      return map[k] ?? (this.allNames.includes(k) ? k : this.allNames[0]);
+    },
+    availableNames(){
+      const used = new Set(this.axes.map(a => a.name));
+      return this.allNames.filter(n => !used.has(n));
+    },
+    isNameTaken(name, idx){ return this.axes.some((a,i)=> i!==idx && a.name===name); },
+
+    // axes CRUD
+    addAxis(name=null){
+      if(this.axes.length >= this.allNames.length) return;
+      const n = name ?? this.availableNames()[0] ?? this.allNames[0];
+      if(this.axes.find(a => a.name === n)) return;
+      this.axes.push({ name:n, values:[] });
+      const i = this.axes.length - 1;
+      this.inputs[i] = '';
+      this.refreshSuggest(i);
+      this.push();
+    },
+    removeAxis(idx){
+      this.axes.splice(idx,1);
+      delete this.inputs[idx];
+      delete this.suggest[idx];
+      this.push();
+    },
+    normalizeAxis(idx){
+      const a = this.axes[idx];
+      a.name = this.canonName(a.name);
+      if (this.isNameTaken(a.name, idx)){
+        const free = this.availableNames()[0];
+        if (free) a.name = free;
+      }
+      // при смене имени — обновим подсказки
+      this.refreshSuggest(idx);
+      this.push();
+    },
+
+    // values + suggest
+    onInput(i){
+      this.refreshSuggest(i);
+    },
+    refreshSuggest(i){
+      const axis = this.axes[i];
+      if(!axis) return;
+      const pool = Array.isArray(this.catalog[axis.name]) ? this.catalog[axis.name] : [];
+      const q = (this.inputs[i] || '').toLowerCase();
+      const chosen = new Set(axis.values);
+      let list = pool.filter(v => !chosen.has(v) && (!q || String(v).toLowerCase().includes(q)));
+      // чуть-чуть сортировки: сначала точные/начинающиеся
+      list = list.sort((a,b)=>{
+        const A = String(a).toLowerCase(), B = String(b).toLowerCase();
+        const aw = (A.startsWith(q)?0:1), bw = (B.startsWith(q)?0:1);
+        if(aw !== bw) return aw - bw;
+        return A.localeCompare(B,'ru');
+      }).slice(0,10);
+      this.suggest[i] = { list };
+    },
+    commitFromSuggest(i){
+      const s = this.suggest[i]?.list || [];
+      if (s.length){
+        this.addValue(i, s[0]);
+        this.inputs[i] = '';
+        this.suggest[i].list = [];
+        this.push();
+        return;
+      }
+      // если подсказок нет — добавляем как есть
+      this.commitFree(i);
+    },
+    commitFree(i){
+      const raw = String(this.inputs[i] || '').trim();
+      if(!raw) return;
+      // разделение по запятым
+      const parts = raw.split(',').map(s=>s.trim()).filter(Boolean);
+      parts.forEach(p => this.addValue(i, p));
+      this.inputs[i] = '';
+      this.suggest[i].list = [];
+      this.push();
+    },
+    addValue(i, val){
+      val = String(val).trim();
+      if(!val) return;
+      const arr = this.axes[i].values;
+      if(!arr.includes(val)) arr.push(val);
+    },
+    removeValue(i, val){
+      const arr = this.axes[i].values;
+      const k = arr.indexOf(val);
+      if(k !== -1) arr.splice(k,1);
+      this.refreshSuggest(i);
+      this.push();
+    },
+
+    // sync
+    push(){
+      const clean = this.axes.map(a => ({
+        name: a.name,
+        values: [...a.values].sort((x,y)=> String(x).localeCompare(String(y),'ru'))
+      }));
+      this.setWire('data.variant_state.variant_options', clean);
+    },
+
+    json(v){ try{return JSON.stringify(v)}catch{return '[]'} },
+  }
+}
+</script>

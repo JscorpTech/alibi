@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use App\Models\Variant;
 
 class MigrateProductSizesToVariants extends Command
 {
@@ -21,60 +22,54 @@ class MigrateProductSizesToVariants extends Command
             ->orderBy('product_id')
             ->chunkById($chunk, function ($rows) use ($dry) {
                 foreach ($rows as $r) {
+                    // size name
                     $sizeName = DB::table('sizes')->where('id', $r->size_id)->value('name') ?? null;
+                    // product (для цены/sku)
                     $product = DB::table('products')->where('id', $r->product_id)->first();
+
                     if (!$product) {
                         $this->warn("Skip: product not found id={$r->product_id}");
                         continue;
                     }
 
                     $sku = $r->sku ?? ($product->sku ?? null);
-                    $barcode = $r->barcode ?? ($product->barcode ?? null);
-
-                    if (empty($barcode)) {
-                        // Простая генерация уникального 13-значного числового кода
-                        $barcode = $this->generateUniqueBarcode();
-                        $this->info("Generated barcode {$barcode} for product_id={$r->product_id}, size_id={$r->size_id}");
-                    }
-
-                    $insert = [
-                        'product_id' => $r->product_id,
-                        'price' => $product->price ?? 0,
+                    $attrs = ['Size' => (string) $sizeName]; // нормализованные ключи
+                    $data = [
+                        'price' => (int) ($product->price ?? 0),
                         'sku' => $sku,
-                        'barcode' => $barcode,
                         'stock' => (int) ($r->count ?? 0),
-                        'attrs' => json_encode(['Size' => $sizeName]),
-                        'image' => null,
                         'available' => true,
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        // image не трогаем в миграции
                     ];
 
                     if ($dry) {
-                        $this->line("[DRY] Would insert variant: product_id={$r->product_id} sku={$sku} barcode={$barcode} stock={$insert['stock']}");
-                    } else {
-                        try {
-                            DB::table('variants')->insert($insert);
-                        } catch (\Throwable $e) {
-                            $this->error("Failed insert variant for product_id={$r->product_id}: " . $e->getMessage());
+                        $this->line("[DRY] upsert Variant by (product_id+attrs): product_id={$r->product_id} sku={$sku} stock={$data['stock']} attrs=" . json_encode($attrs));
+                        continue;
+                    }
+
+                    try {
+                        // ищем существующую запись по product_id + JSON-равенству attrs (PostgreSQL jsonb)
+                        $existing = Variant::query()
+                            ->where('product_id', $r->product_id)
+                            ->whereRaw('attrs::jsonb = ?::jsonb', [json_encode($attrs)])
+                            ->first();
+
+                        if ($existing) {
+                            // обновляем без трогания barcode (он уже есть/останется)
+                            $existing->fill($data)->save();
+                        } else {
+                            // создаём через Eloquent БЕЗ barcode → сработает Variant::creating и модель сама его присвоит
+                            Variant::create(array_merge($data, [
+                                'product_id' => $r->product_id,
+                                'attrs' => $attrs,
+                            ]));
                         }
+                    } catch (\Throwable $e) {
+                        $this->error("Failed upsert variant for product_id={$r->product_id}: " . $e->getMessage());
                     }
                 }
             });
 
         $this->info('Migration finished.');
-    }
-
-    protected function generateUniqueBarcode(): string
-    {
-        // Очень простая генерация 13 цифр; можно заменить на корректный EAN13 generator
-        do {
-            $code = str_pad((string) random_int(0, 9999999999999), 13, '0', STR_PAD_LEFT);
-            $exists = DB::table('variants')->where('barcode', $code)->exists()
-                || DB::table('products')->where('barcode', $code)->exists()
-                || DB::table('product_sizes')->where('barcode', $code)->exists();
-        } while ($exists);
-
-        return $code;
     }
 }

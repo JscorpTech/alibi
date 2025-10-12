@@ -12,15 +12,201 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany, HasMany, MorphMany};
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Illuminate\Support\Arr;
+
 
 class Product extends Model
 {
     use BaseQuery, HasFactory, BaseModel, \Illuminate\Database\Eloquent\SoftDeletes;
 
+    private static function normalizeUploadPath($val): ?string
+    {
+        if ($val instanceof TemporaryUploadedFile) {
+            // сохраняем на 'public', путь вернётся как 'products/....'
+            return $val->store('products', 'public');
+        }
+        if (is_array($val)) {
+            // может быть ['path' => 'products/a.jpg'] или ['products/a.jpg']
+            return $val['path'] ?? (reset($val) ?: null);
+        }
+        return is_string($val) ? ($val !== '' ? $val : null) : null;
+    }
+
+    public function setGalleryAttribute($value): void
+    {
+        $paths = [];
+
+        // допускаем: строка, список строк, список файлов, null
+        $raw = is_null($value) ? [] : (is_array($value) ? $value : [$value]);
+
+        foreach ($raw as $item) {
+            $p = self::normalizeUploadPath($item);
+            if ($p)
+                $paths[] = $p;
+        }
+
+        // всегда JSON в базе
+        $this->attributes['gallery'] = json_encode(array_values(array_unique($paths)), JSON_UNESCAPED_UNICODE);
+    }
+    public function getGalleryAttribute($value): array
+    {
+        if (is_array($value))
+            return $value;        // уже кастом вернул массив
+        if (is_string($value) && $value !== '') {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return array_values(array_filter($decoded, fn($x) => is_string($x) && $x !== ''));
+            }
+        }
+        return []; // по умолчанию
+    }
+
+    public function setColorImagesAttribute($value): void
+    {
+        // Если $value уже нормальный ['Black' => ['path1', ...]], просто проставляем:
+        if (is_array($value)) {
+            $this->attributes['color_images'] = json_encode($value, JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        // Если пришла строка JSON — попробуем распарсить
+        if (is_string($value) && $value !== '') {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $this->attributes['color_images'] = json_encode($decoded, JSON_UNESCAPED_UNICODE);
+                return;
+            }
+        }
+
+        // Иначе пустой массив
+        $this->attributes['color_images'] = json_encode([], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getColorImagesAttribute($value): array
+    {
+        if (is_array($value))
+            return $value;
+        if (is_string($value) && $value !== '') {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                // подчистим мусор, приведём к строкам
+                $clean = [];
+                foreach ($decoded as $color => $list) {
+                    $arr = array_values(array_filter((array) $list, fn($x) => is_string($x) && $x !== ''));
+                    if ($arr)
+                        $clean[(string) $color] = $arr;
+                }
+                return $clean;
+            }
+        }
+        return [];
+    }
+
+    public function variantOptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(VariantOption::class, 'product_id');
+    }
     protected $casts = [
         'offers' => 'json',
         'is_active' => 'bool',
+        'gallery' => 'array',
+        'options' => 'array',
+        'color_images' => 'array',
     ];
+
+    // Product.php (фрагменты)
+    public function upsertVariantOptions(array $map): void
+    {
+        // $map = ['Size' => ['41','42'], 'Color' => ['Black','White']]
+        $this->loadMissing('variantOptions.values');
+        foreach ($map as $name => $values) {
+            $opt = $this->variantOptions()->firstOrCreate(['name' => $name]);
+            foreach ($values as $val) {
+                $opt->values()->firstOrCreate(['name' => (string) $val]);
+            }
+        }
+    }
+
+    // App/Models/Product.php
+
+    public function matrixToVariants(array $rows): int
+    {
+        \Log::info('matrixToVariants called', [
+            'rows_count' => count($rows),
+            'rows_stocks' => array_map(fn($r) => [
+                'id' => $r['id'] ?? null,
+                'stock' => $r['stock'] ?? null,
+                'sku' => $r['sku'] ?? null
+            ], $rows),
+        ]);
+
+        $created = 0;
+        foreach ($rows as $r) {
+            $attrs = (array) ($r['attrs'] ?? []);
+            ksort($attrs); // нормализуем порядок ключей
+
+            // Postgres jsonb равенство
+            $v = $this->variants()
+                ->whereRaw('attrs::jsonb = ?::jsonb', [json_encode($attrs, JSON_UNESCAPED_UNICODE)])
+                ->first();
+
+            if (!$v) {
+                $v = $this->variants()->make();
+            }
+
+            $oldStock = $v->stock ?? 0;
+
+            $v->price = (int) ($r['price'] ?? 0);
+            $v->stock = (int) ($r['stock'] ?? 0);
+            $v->attrs = $attrs;
+            $v->image = $r['image'] ?? null;
+            $v->sku = $r['sku'] ?? null;
+
+            \Log::info('matrixToVariants: saving variant', [
+                'variant_id' => $v->id ?? 'new',
+                'sku' => $v->sku,
+                'old_stock' => $oldStock,
+                'new_stock' => $v->stock,
+                'attrs' => $attrs,
+            ]);
+
+            $v->save(); // barcode и available выставятся в хуках Variant
+            $created++;
+        }
+
+        \Log::info('matrixToVariants: complete', ['created' => $created]);
+
+        return $created;
+    }
+
+    public function findVariantIdBy(?int $sizeId, ?int $colorId): ?int
+    {
+        $size = $sizeId ? \App\Models\Size::find($sizeId)?->name : null;
+        $color = $colorId ? \DB::table('colors')->where('id', $colorId)->value('name') : null;
+
+        $q = $this->variants();
+        if ($size)
+            $q->where('attrs->Size', $size);
+        if ($color)
+            $q->where('attrs->Color', $color);
+
+        $id = $q->value('id');
+        return $id ? (int) $id : null;
+    }
+
+    public function imageForColor(?string $colorName): ?string
+    {
+        if (!$colorName)
+            return $this->thumbnail;
+        // если используешь ProductColors с path — маппинг здесь
+        $mediaPath = \DB::table('product_colors')
+            ->join('colors', 'colors.id', '=', 'product_colors.color_id')
+            ->where('product_colors.product_id', $this->id)
+            ->where('colors.name', $colorName)
+            ->value('path'); // если нет path — вернём основное фото
+        return $mediaPath ? url($mediaPath) : $this->thumbnail;
+    }
 
     protected $attributes = [
         'cost_price' => 0,
@@ -28,8 +214,13 @@ class Product extends Model
 
     protected $fillable = [
         'is_active',
+        'name_ru',          // 👈 добавь это
+        'desc_ru',
         'channel',
         'stock_location_id',
+        'gallery',
+        'options',
+        'color_images',
         'image',
         'gender',
         'price',
@@ -46,6 +237,86 @@ class Product extends Model
     ];
 
     /* ===================== Relations ===================== */
+
+    // App\Models\Product.php
+    public function buildVariantState(): array
+    {
+        // 1) Осі (Size/Color) → значения
+        $options = [];
+        // если есть вариант-опции в БД — читаем их
+        if (Schema::hasTable('variant_options') && Schema::hasTable('variant_option_values')) {
+            $opts = \App\Models\VariantOption::with('values')
+                ->where('product_id', $this->id)->get();
+            foreach ($opts as $opt) {
+                $values = $opt->values->pluck('name')->filter()->unique()->values()->all();
+                if ($values) {
+                    $options[] = [
+                        'name' => $opt->name, // "Size" / "Color"
+                        'values' => $values, // ["41","42"] / ["Black","White"]
+                    ];
+                }
+            }
+        }
+
+        // fallback: если таблиц/данных опций нет — строим из variants.attrs
+        if (empty($options)) {
+            $sizes = [];
+            $colors = [];
+            foreach ($this->variants()->get(['attrs']) as $v) {
+                $a = (array) ($v->attrs ?? []);
+                if (isset($a['Size']))
+                    $sizes[] = (string) $a['Size'];
+                if (isset($a['Color']))
+                    $colors[] = (string) $a['Color'];
+            }
+            $sizes = array_values(array_unique(array_filter($sizes)));
+            $colors = array_values(array_unique(array_filter($colors)));
+            if ($sizes)
+                $options[] = ['name' => 'Size', 'values' => $sizes];
+            if ($colors)
+                $options[] = ['name' => 'Color', 'values' => $colors];
+        }
+
+        // 2) Строки редактора вариантов + карта stocks
+        $rows = [];
+        $stocks = [];  // 👈 ДОБАВЛЕНО
+
+        foreach ($this->variants()->get(['id', 'sku', 'price', 'stock', 'image', 'attrs', 'barcode']) as $v) {
+            $attrs = (array) $v->attrs;
+            $title = $attrs
+                ? implode(' / ', array_map(
+                    fn($k, $val) => "{$k}: {$val}",
+                    array_keys($attrs),
+                    array_values($attrs)
+                ))
+                : ($v->sku ?: 'Вариант');
+
+            $row = [
+                'id' => $v->id,
+                'title' => $title,
+                'attrs' => $attrs,
+                'price' => (int) $v->price,
+                'stock' => (int) $v->stock,
+                'available' => (int) $v->stock > 0,
+                'image' => $v->image,
+                'sku' => $v->sku,
+                'barcode' => (string) ($v->barcode ?? ''),
+            ];
+
+            $rows[] = $row;
+
+            // ✅ ДОБАВЛЕНО: Формируем карту stocks по ключу варианта
+            $rowKey = 'id:' . $v->id;
+            $stocks[$rowKey] = (int) $v->stock;
+        }
+
+        return [
+            'variant_options' => $options,
+            'variants_draft' => $rows,
+            'variants_editor' => $rows,
+            'stocks' => $stocks,  // 👈 ДОБАВЛЕНО
+        ];
+    }
 
     public function inventoryLevels(): HasMany
     {
@@ -286,6 +557,30 @@ class Product extends Model
     }
 
     /* ===================== Boot ===================== */
+
+    public function coverFor(?string $color): ?string
+    {
+        if ($color && isset($this->color_images[$color])) {
+            $ci = $this->color_images[$color];
+            if (is_array($ci) && !empty($ci))
+                return $ci[0];
+            if (is_string($ci) && $ci !== '')
+                return $ci;
+        }
+        return $this->gallery[0] ?? $this->image;
+    }
+
+    public function galleryFor(?string $color): array
+    {
+        if ($color && isset($this->color_images[$color])) {
+            $ci = $this->color_images[$color];
+            if (is_array($ci))
+                return $ci;
+            if (is_string($ci) && $ci !== '')
+                return [$ci];
+        }
+        return $this->gallery ?? [];
+    }
 
     protected static function booted(): void
     {

@@ -6,40 +6,58 @@ use App\Enums\OrderStatusEnum;
 use App\Models\Order;
 use App\Models\OrderGroup;
 use App\Models\ProductSize;
+use App\Models\Variant;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class OrderWriter
 {
     /**
-     * Создаёт OrderGroup + Orders и списывает остатки.
+     * Создаёт OrderGroup + Orders, корректирует остатки и считает total.
      *
-     * @param array{
-     *   user_id?: int|null,
-     *   items: array<int, array{
-     *     product_id:int,
-     *     size_id?:int|null,
-     *     color_id?:int|null,
-     *     count:int,
-     *     price:int,
-     *     discount?:int|null
-     *   }>,
-     *   source: 'app'|'pos',
-     *   cashier_id?: int|null,
-     *   payment_method?: string|null,
-     *   comment?: string|null,
-     *   location_id?: int|null
-     * } $payload
+     * Ожидаемый payload:
+     * [
+     *   'type'              => 'sale'|'return'|'exchange',      // default: sale
+     *   'source'            => 'pos'|'app',                     // default: pos
+     *   'cashier_id'        => int|null,
+     *   'payment_method'    => string|null,
+     *   'comment'           => string|null,
+     *   'location_id'       => int|null,
+     *   'original_group_id' => int|null,
+     *   'user_id'           => int|null,                        // клиент (user)
+     *
+     *   // для sale:      items ИЛИ items_sale
+     *   // для return:    items_return
+     *   // для exchange:  items_return + items_sale
+     *   'items' | 'items_sale' => [
+     *      [
+     *          'product_id' => int,
+     *          'variant_id' => int|null,
+     *          'size_id'    => int|null,
+     *          'color_id'   => int|null,
+     *          'count'      => int,
+     *          'price'      => int,       // цена за 1 шт
+     *          'discount'   => int|null,  // скидка за 1 шт (0 если нет)
+     *      ],
+     *      ...
+     *   ],
+     *   'items_return' => [...] // те же поля; count — сколько возвращается
+     * ]
      */
-
-    // App/Services/Sales/OrderWriter.php
-
     public function create(array $payload): OrderGroup
     {
         return DB::transaction(function () use ($payload) {
-
             $type = $payload['type'] ?? 'sale';
             $source = $payload['source'] ?? 'pos';
 
+            // Проверка возможностей по управлению остатками
+            $hasVariantsStock = Schema::hasTable('variants') && Schema::hasColumn('variants', 'stock');
+            $hasProductSizes = Schema::hasTable('product_sizes')
+                && Schema::hasColumn('product_sizes', 'count')
+                && Schema::hasColumn('product_sizes', 'product_id')
+                && Schema::hasColumn('product_sizes', 'size_id');
+
+            // Создаём группу
             $group = OrderGroup::create([
                 'user_id' => $payload['user_id'] ?? null,
                 'status' => OrderStatusEnum::PENDING,
@@ -54,72 +72,81 @@ class OrderWriter
 
             $total = 0;
 
-            // 1) Возвраты (увеличиваем остатки, сумма со знаком минус)
             foreach (($payload['items_return'] ?? []) as $ret) {
+                $productId = (int) $ret['product_id'];
+                $variantId = isset($ret['variant_id']) ? (int) $ret['variant_id'] : null;
+                $sizeId = isset($ret['size_id']) ? (int) $ret['size_id'] : null;
                 $price = (int) $ret['price'];
-                $count = (int) $ret['count']; // сколько возвращаем
                 $discount = (int) ($ret['discount'] ?? 0);
+                $count = (int) $ret['count'];
 
-                $order = Order::create([
-                    'order_group_id' => $group->id,
-                    'user_id' => $payload['user_id'] ?? null,
-                    'product_id' => $ret['product_id'],
-                    'size_id' => $ret['size_id'] ?? null,
-                    'color_id' => $ret['color_id'] ?? null,
-                    'price' => $price,
-                    'discount' => $discount,
-                    'count' => $count,                 // положительное число
-                    'original_order_id' => $ret['original_order_id'] ?? null,
-                ]);
-
-                // Возврат: увеличиваем остаток
-                if (!empty($ret['size_id'])) {
-                    $ps = ProductSize::where('product_id', $ret['product_id'])
-                        ->where('size_id', $ret['size_id'])
-                        ->lockForUpdate()
-                        ->first();
-                    if ($ps) {
-                        $ps->increment('count', $count);
-                    }
-                }
-
-                $line = ($discount ?: $price) * $count;
-                $total -= $line; // возврат уменьшает сумму
-            }
-
-            // 2) Новые продажи (для обмена) или обычная продажа
-            foreach (($payload['items_sale'] ?? $payload['items'] ?? []) as $it) {
-                $price = (int) $it['price'];
-                $count = (int) $it['count'];
-                $discount = (int) ($it['discount'] ?? 0);
-
+                // Строка возврата
                 Order::create([
                     'order_group_id' => $group->id,
                     'user_id' => $payload['user_id'] ?? null,
-                    'product_id' => $it['product_id'],
-                    'size_id' => $it['size_id'] ?? null,
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                    'size_id' => $sizeId,
+                    'color_id' => $ret['color_id'] ?? null,
+                    'price' => $price,
+                    'discount' => $discount,
+                    'count' => $count,
+                    'original_order_id' => $ret['original_order_id'] ?? null,
+                ]);
+
+          
+                $this->increaseStock(
+                    variantId: $variantId,
+                    productId: $productId,
+                    sizeId: $sizeId,
+                    qty: $count,
+                    canUseVariantsStock: $hasVariantsStock,
+                    canUseProductSizes: $hasProductSizes
+                );
+
+                // Уменьшаем total
+                $line = max(0, $price - $discount) * $count;
+                $total -= $line;
+            }
+
+            $saleItems = $payload['items_sale'] ?? ($payload['items'] ?? []);
+            foreach ($saleItems as $it) {
+                $productId = (int) $it['product_id'];
+                $variantId = isset($it['variant_id']) ? (int) $it['variant_id'] : null;
+                $sizeId = isset($it['size_id']) ? (int) $it['size_id'] : null;
+                $price = (int) $it['price'];
+                $discount = (int) ($it['discount'] ?? 0);
+                $count = (int) $it['count'];
+
+                // Строка продажи
+                Order::create([
+                    'order_group_id' => $group->id,
+                    'user_id' => $payload['user_id'] ?? null,
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                    'size_id' => $sizeId,
                     'color_id' => $it['color_id'] ?? null,
                     'price' => $price,
                     'discount' => $discount,
                     'count' => $count,
                 ]);
 
-                // Продажа: уменьшаем остаток
-                if (!empty($it['size_id'])) {
-                    $ps = ProductSize::where('product_id', $it['product_id'])
-                        ->where('size_id', $it['size_id'])
-                        ->lockForUpdate()
-                        ->first();
-                    if ($ps) {
-                        $ps->decrement('count', $count);
-                    }
-                }
+                // -count из остатков
+                $this->decreaseStock(
+                    variantId: $variantId,
+                    productId: $productId,
+                    sizeId: $sizeId,
+                    qty: $count,
+                    canUseVariantsStock: $hasVariantsStock,
+                    canUseProductSizes: $hasProductSizes
+                );
 
-                $line = ($discount ?: $price) * $count;
+                // Увеличиваем total
+                $line = max(0, $price - $discount) * $count;
                 $total += $line;
             }
 
-            // POS — сразу success
+            // Финализация группы
             $group->update([
                 'total' => $total,
                 'status' => OrderStatusEnum::SUCCESS,
@@ -130,71 +157,64 @@ class OrderWriter
             return $group;
         });
     }
-    // public function create(array $payload): OrderGroup
-    // {
-    //     return DB::transaction(function () use ($payload) {
-    //         // создаём группу
-    //         $group = OrderGroup::create([
-    //             'user_id'        => $payload['user_id']        ?? null,
-    //             'status'         => OrderStatusEnum::PENDING,
-    //             'source'         => $payload['source'],                 // 'pos' | 'app'
-    //             'cashier_id'     => $payload['cashier_id']     ?? null,
-    //             'payment_method' => $payload['payment_method'] ?? null,
-    //             'comment'        => $payload['comment']        ?? null,
-    //             'location_id'    => $payload['location_id']    ?? null, // 👈 не забудь добавить в $fillable
-    //         ]);
 
-    //         $total = 0;
+    /* =============================== Stock Helpers =============================== */
 
-    //         foreach ($payload['items'] as $it) {
-    //             $price    = (int) $it['price'];
-    //             $discount = (int) ($it['discount'] ?? 0);
-    //             $count    = (int) $it['count'];
+    protected function increaseStock(
+        ?int $variantId,
+        int $productId,
+        ?int $sizeId,
+        int $qty,
+        bool $canUseVariantsStock,
+        bool $canUseProductSizes
+    ): void {
+        $done = false;
 
-    //             // строка заказа (фиксируем моментальную цену/скидку)
-    //             Order::create([
-    //                 'order_group_id' => $group->id,
-    //                 'user_id'        => $payload['user_id'] ?? null, // см. чек-лист ниже
-    //                 'product_id'     => (int) $it['product_id'],
-    //                 'size_id'        => $it['size_id']   ?? null,
-    //                 'color_id'       => $it['color_id']  ?? null,
-    //                 'price'          => $price,
-    //                 'discount'       => $discount,
-    //                 'count'          => $count,
-    //             ]);
+        if ($canUseVariantsStock && $variantId) {
+            Variant::where('id', $variantId)
+                ->lockForUpdate()
+                ->update([
+                    'stock' => DB::raw('GREATEST(0, COALESCE(stock,0) + ' . (int) $qty . ')'),
+                ]);
+            $done = true;
+        }
 
-    //             // списываем остаток по размеру (если есть)
-    //             if (!empty($it['size_id'])) {
-    //                 $ps = ProductSize::where('product_id', (int) $it['product_id'])
-    //                     ->where('size_id',   (int) $it['size_id'])
-    //                     ->lockForUpdate()
-    //                     ->first();
+        if (!$done && $canUseProductSizes && $sizeId) {
+            $ps = ProductSize::where('product_id', $productId)
+                ->where('size_id', $sizeId)
+                ->lockForUpdate()
+                ->first();
 
-    //                 if ($ps) {
-    //                     // не даём уйти в минус
-    //                     $new = max(0, (int)$ps->count - $count);
-    //                     $ps->update(['count' => $new]);
-    //                 }
-    //             }
+            $ps?->increment('count', (int) $qty);
+        }
+    }
 
-    //             // если discount — это "цена со скидкой", используем её; иначе — обычную цену
-    //             $line = ($discount ?: $price) * $count;
-    //             $total += $line;
-    //         }
+    protected function decreaseStock(
+        ?int $variantId,
+        int $productId,
+        ?int $sizeId,
+        int $qty,
+        bool $canUseVariantsStock,
+        bool $canUseProductSizes
+    ): void {
+        $done = false;
 
-    //         // POS — сразу успех, APP — остаётся PENDING
-    //         $isPos = $payload['source'] === 'pos';
+        if ($canUseVariantsStock && $variantId) {
+            Variant::where('id', $variantId)
+                ->lockForUpdate()
+                ->update([
+                    'stock' => DB::raw('GREATEST(0, COALESCE(stock,0) - ' . (int) $qty . ')'),
+                ]);
+            $done = true;
+        }
 
-    //         $group->update([
-    //             'total'        => $total,
-    //             'status'       => $isPos ? OrderStatusEnum::SUCCESS : OrderStatusEnum::PENDING,
-    //             'paid_at'      => $isPos ? now() : null,
-    //             'order_number' => $isPos
-    //                 ? (now()->format('YmdHis') . $group->id)
-    //                 : $group->order_number,
-    //         ]);
+        if (!$done && $canUseProductSizes && $sizeId) {
+            $ps = ProductSize::where('product_id', $productId)
+                ->where('size_id', $sizeId)
+                ->lockForUpdate()
+                ->first();
 
-    //         return $group;
-    //     });
-    // }
+            $ps?->decrement('count', (int) $qty);
+        }
+    }
 }

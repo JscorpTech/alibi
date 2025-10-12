@@ -1,3 +1,5 @@
+
+
 <x-filament-panels::page>
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
@@ -47,15 +49,15 @@
                                 </div>
 
                                 {{-- Цвета --}}
+                                {{-- Цвета --}}
                                 @if (!empty($p['colors']))
                                     <div class="mt-1 flex flex-wrap gap-1.5">
                                         @foreach ($p['colors'] as $c)
                                             @php
-                                                $isSelected = ($selectedColor[$p['id']] ?? null) === $c['id'];
-                                              @endphp
+                                                $isSelectedColor = ($selectedColor[$p['id']] ?? null) === $c['id'];
+                                            @endphp
                                             <button type="button" wire:click="selectColor({{ $p['id'] }}, {{ $c['id'] }})"
-                                                class="inline-flex items-center gap-1 rounded-md border px-2 py-[2px] text-[11px]
-                                                                                                                                                                                               {{ $isSelected ? 'bg-gray-900 text-white' : 'hover:bg-gray-50' }}">
+                                                class="inline-flex items-center gap-1 rounded-md border px-2 py-[2px] text-[11px] {{ $isSelectedColor ? 'bg-gray-900 text-white border-gray-900' : 'hover:bg-gray-50' }}">
                                                 <span class="inline-block w-[10px] h-[10px] rounded-full bg-gray-300"></span>
                                                 {{ $c['name'] }}
                                             </button>
@@ -63,36 +65,83 @@
                                     </div>
                                 @endif
 
-                                {{-- Размеры --}}
-                                @if (!empty($p['sizes']))
-                                    <div class="mt-2 flex flex-wrap gap-1.5">
-                                        @foreach ($p['sizes'] as $s)
-                                            @php
-                                                $disabled = isset($s['stock']) && (int) $s['stock'] <= 0;
-                                                $isSelected = ($selectedSize[$p['id']] ?? null) === $s['id'];
-                                              @endphp
-                                            <button type="button" wire:click="selectSize({{ $p['id'] }}, {{ $s['id'] }})"
-                                                class="inline-flex items-center gap-1 rounded-md border px-2 py-[2px] text-[11px]
-                                                                                                                                                                                               {{ $disabled ? 'cursor-not-allowed opacity-40' : ($isSelected ? 'bg-gray-900 text-white' : 'hover:bg-gray-50') }}"
-                                                title="{{ $s['name'] }}@isset($s['stock']) • ост: {{ $s['stock'] }} @endisset"
-                                                @if($disabled) disabled @endif>
-                                                <span class="font-medium">{{ $s['name'] }}</span>
-                                                @isset($s['stock'])
-                                                    <span class="text-[10px] text-gray-400">({{ $s['stock'] }})</span>
-                                                @endisset
-                                            </button>
-                                        @endforeach
-                                    </div>
-                                @endif
+                                @php
+                                    // какие цвет/группа сейчас выбраны
+                                    $currentColorId = $selectedColor[$p['id']] ?? null;
+                                    $currentColorName = $currentColorId
+                                        ? (collect($p['colors'])->firstWhere('id', $currentColorId)['name'] ?? null)
+                                        : null;
 
-                                {{-- Кнопка "Добавить" --}}
-                                <div class="mt-3 flex justify-end">
-                                    <button type="button" wire:click="addSelected({{ $p['id'] }})"
-                                        class="grid h-8 px-3 place-items-center rounded-xl bg-gray-900 text-white text-sm transition hover:bg-gray-800"
-                                        title="Добавить в чек">
-                                        Добавить
-                                    </button>
-                                </div>
+                                    $currentGroup = $currentColorName
+                                        ? collect($p['matrix'] ?? [])->firstWhere('color', $currentColorName)
+                                        : null;
+
+                                    // выбранный размер (id из справочника Sizes)
+                                    $selSizeId = $selectedSize[$p['id']] ?? null;
+
+                                    // для отображения SKU/Barcode и stock по выбранному размеру берём строку из matrix
+                                    $selSizeName = $selSizeId
+                                        ? (collect($p['sizes'])->firstWhere('id', $selSizeId)['name'] ?? null)
+                                        : null;
+
+                                    $selRow = ($currentGroup && $selSizeName)
+                                        ? collect($currentGroup['sizes'])->firstWhere('name', $selSizeName)
+                                        : null;
+
+                                    $canAdd = $currentColorId && $selSizeId; // оба выбраны
+                                @endphp
+
+                                {{-- Размеры ПОД выбранным цветом (из matrix) --}}
+@if ($currentGroup)
+    <div class="mt-2 flex flex-wrap gap-1.5">
+        @foreach ($currentGroup['sizes'] as $s)
+            @php
+                // получаем size_id по имени из $p['sizes']
+                $sizeIdForBtn = collect($p['sizes'])->firstWhere('name', $s['name'])['id'] ?? null;
+                $disabled = (int) ($s['stock'] ?? 0) <= 0 || !$sizeIdForBtn;
+                $isSelectedSize = $selSizeId === $sizeIdForBtn;
+            @endphp
+            <button type="button"
+                @if(!$disabled) wire:click="selectSize({{ $p['id'] }}, {{ $sizeIdForBtn }})" @endif
+                class="inline-flex items-center gap-1 rounded-md border px-2 py-[2px] text-[11px]
+                       {{ $disabled ? 'cursor-not-allowed opacity-40' : ($isSelectedSize ? 'bg-gray-900 text-white border-gray-900' : 'hover:bg-gray-50') }}"
+                title="{{ $s['name'] }} • ост: {{ (int)($s['stock'] ?? 0) }}"
+                @if($disabled) disabled @endif>
+                <span class="font-medium">{{ $s['name'] }}</span>
+                <span class="text-[10px] text-gray-400">({{ (int)($s['stock'] ?? 0) }})</span>
+            </button>
+        @endforeach
+    </div>
+@endif
+
+                                
+
+                                {{-- Мини-инфо по выбранной комбинации (SKU / Barcode / Остаток) --}}
+@if($selRow)
+    <div class="mt-2 text-[11px] text-gray-600 flex flex-wrap gap-3">
+        @if(!empty($selRow['sku']))
+            <span>SKU: <span class="font-mono">{{ $selRow['sku'] }}</span></span>
+        @endif
+        @if(!empty($selRow['barcode']))
+            <span>Barcode: <span class="font-mono">{{ $selRow['barcode'] }}</span></span>
+        @endif
+        <span>Остаток: <span class="font-semibold">{{ (int)($selRow['stock'] ?? 0) }}</span></span>
+    </div>
+@endif
+
+{{-- Кнопка "Добавить" — активна только если выбран и цвет, и размер --}}
+<div class="mt-3 flex justify-end">
+    <button type="button"
+        @if($canAdd)
+            wire:click="addToCart({{ $p['id'] }}, {{ $selSizeId ?? 'null' }}, {{ $currentColorId ?? 'null' }})"
+        @endif
+        class="grid h-8 px-3 place-items-center rounded-xl text-sm transition
+               {{ $canAdd ? 'bg-gray-900 text-white hover:bg-gray-800' : 'bg-gray-200 text-gray-500 cursor-not-allowed' }}"
+        @if(!$canAdd) title="Выберите цвет и размер" @endif
+        @if(!$canAdd) disabled @endif>
+        Добавить
+    </button>
+</div>
 
                                 {{-- 📦 Суммарный остаток --}}
                                 @if(!empty($p['qty_total']))

@@ -44,161 +44,200 @@ class ProductController extends Controller
      */
     public function view($id)
     {
-        // 1) Тянем продукт
-        $product = DB::table('products')
-            ->select([
-                'id',
-                DB::raw("COALESCE(name_ru, '') as name"),
-                'price',
-                DB::raw("NULLIF(desc_ru, '') as description"),
-                DB::raw("NULLIF(image, '') as image"),
-                DB::raw("COALESCE(is_active, TRUE) as active"),
-                // на случай синтет. вариантов
-                DB::raw("NULLIF(sku, '') as p_sku"),
-                DB::raw("NULLIF(barcode, '') as p_barcode"),
-            ])
-            ->where('id', $id)
-            ->first();
+        // 1) Продукт: читаем основные поля + JSON-колонки (если есть)
+        $hasGallery = Schema::hasColumn('products', 'gallery');
+        $hasOptionsJson = Schema::hasColumn('products', 'options');
+        $hasColorImages = Schema::hasColumn('products', 'color_images');
 
+        $select = [
+            'id',
+            DB::raw("COALESCE(name_ru, '') as name"),
+            'price',
+            DB::raw("NULLIF(desc_ru, '') as description"),
+            DB::raw("NULLIF(image, '') as image"),
+            DB::raw("COALESCE(is_active, TRUE) as active"),
+            DB::raw("NULLIF(sku, '') as p_sku"),
+            DB::raw("NULLIF(barcode, '') as p_barcode"),
+        ];
+        if ($hasGallery)
+            $select[] = 'gallery';
+        if ($hasOptionsJson)
+            $select[] = 'options';
+        if ($hasColorImages)
+            $select[] = 'color_images';
+
+        $product = DB::table('products')->select($select)->where('id', $id)->first();
         if (!$product) {
             return response()->json(['success' => false, 'message' => 'Product not found'], 404);
         }
 
-        // 2) Галерея картинок товара
-        $images = [];
-        if (Schema::hasTable('product_images')) {
-            $imgCol = Schema::hasColumn('product_images', 'url') ? 'url' : (Schema::hasColumn('product_images', 'path') ? 'path' : null);
+        // helpers
+        $toArray = function ($val) {
+            if (is_array($val))
+                return $val;
+            if (is_object($val))
+                return (array) $val;
+            if (!is_string($val) || $val === '')
+                return [];
+            try {
+                $arr = json_decode($val, true, flags: JSON_THROW_ON_ERROR);
+                return is_array($arr) ? $arr : [];
+            } catch (\Throwable) {
+                return [];
+            }
+        };
+
+        // 2) gallery: сначала из JSON-колонки, иначе из product_images, иначе [image]
+        $gallery = [];
+        if ($hasGallery)
+            $gallery = $toArray($product->gallery);
+
+        if (empty($gallery) && Schema::hasTable('product_images')) {
+            $imgCol = Schema::hasColumn('product_images', 'url') ? 'url'
+                : (Schema::hasColumn('product_images', 'path') ? 'path' : null);
             if ($imgCol) {
-                $images = DB::table('product_images')
+                $gallery = DB::table('product_images')
                     ->where('product_id', $id)
                     ->when(Schema::hasColumn('product_images', 'position'), fn($q) => $q->orderBy('position'))
-                    ->pluck($imgCol)
-                    ->filter()
-                    ->values()
-                    ->all();
+                    ->pluck($imgCol)->filter()->values()->all();
             }
         }
-        if (empty($images) && $product->image) {
-            $images = [(string) $product->image];
+        if (empty($gallery) && !empty($product->image)) {
+            $gallery = [(string) $product->image];
         }
-        // Абсолютные URL
-        $images = array_map([$this, 'toUrl'], $images);
+        // абсолютные URL
+        $gallery = array_map([$this, 'toUrl'], $gallery);
+        $cover = $gallery[0] ?? $this->toUrl($product->image ?? null);
 
-        // 3) Реальные variants?
+        // 3) colorImages: JSON-колонка, а если пусто – соберём из legacy product_color_images
+        $colorImages = [];
+        if ($hasColorImages) {
+            $raw = $toArray($product->color_images ?? null);
+            foreach ($raw as $color => $val) {
+                if (is_string($val)) {
+                    $colorImages[$color] = [$val];
+                } else {
+                    $colorImages[$color] = array_values(array_map(
+                        fn($x) => is_string($x) ? $x : (string) $x,
+                        (array) $val
+                    ));
+                }
+            }
+        }
+        if (empty($colorImages) && Schema::hasTable('product_colors') && Schema::hasTable('colors')) {
+            // cover по цвету
+            $map = DB::table('product_colors as pc')
+                ->join('colors as c', 'c.id', '=', 'pc.color_id')
+                ->where('pc.product_id', $id)
+                ->pluck('pc.id', 'c.name'); // ["Black" => pc_id, ...]
+            if ($map && Schema::hasTable('product_color_images')) {
+                foreach ($map as $colorName => $pcId) {
+                    $paths = DB::table('product_color_images')
+                        ->where('product_color_id', $pcId)
+                        ->when(Schema::hasColumn('product_color_images', 'position'), fn($q) => $q->orderBy('position'))
+                        ->pluck('path')->filter()->values()->all();
+                    if ($paths) {
+                        $colorImages[$colorName] = array_map([$this, 'toUrl'], $paths);
+                    }
+                }
+            }
+        }
+
+        // 4) options: из JSON-колонки, иначе собираем из variants.attrs или legacy-таблиц
+        $options = [];
+        if ($hasOptionsJson)
+            $options = $toArray($product->options ?? null);
+
+        // variants из таблицы
         $variants = collect();
         if (Schema::hasTable('variants')) {
             $variants = DB::table('variants')
                 ->where('product_id', $id)
-                ->orderBy('id')
-                ->get();
+                ->orderBy('id')->get();
         }
 
-        $optionsList = [];
-        $variantsOut = collect();
-
-        if ($variants->isNotEmpty()) {
-            // 3A) ВЕТКА: есть реальные variants → собираем options из attrs
-            $optionsMap = [];
-            foreach ($variants as $v) {
-                $attrs = $this->safeJson($v->attrs);
-                foreach ($attrs as $k => $val) {
-                    $k = (string) $k;
-                    $val = (string) $val;
-                    $optionsMap[$k] = $optionsMap[$k] ?? [];
-                    if (!in_array($val, $optionsMap[$k], true)) {
-                        $optionsMap[$k][] = $val;
+        if (empty($options)) {
+            if ($variants->isNotEmpty()) {
+                // из attrs
+                $map = [];
+                foreach ($variants as $v) {
+                    $attrs = $toArray($v->attrs);
+                    foreach ($attrs as $k => $val) {
+                        $k = (string) $k;
+                        $val = (string) $val;
+                        $map[$k] = $map[$k] ?? [];
+                        if (!in_array($val, $map[$k], true))
+                            $map[$k][] = $val;
                     }
                 }
+                foreach ($map as $name => $values) {
+                    $options[] = ['name' => $name, 'values' => array_values($values)];
+                }
+            } else {
+                // legacy sizes/colors
+                if (Schema::hasTable('product_sizes')) {
+                    $hasDict = Schema::hasTable('sizes');
+                    $sizes = DB::table('product_sizes as ps')
+                        ->when($hasDict, fn($q) => $q->leftJoin('sizes as s', 's.id', '=', 'ps.size_id'))
+                        ->where('ps.product_id', $id)
+                        ->pluck($hasDict ? 's.name' : 'ps.size_id')
+                        ->filter()->unique()->values()->all();
+                    if ($sizes)
+                        $options[] = ['name' => 'Size', 'values' => $sizes];
+                }
+                if (Schema::hasTable('product_colors') && Schema::hasTable('colors')) {
+                    $colors = DB::table('product_colors as pc')
+                        ->join('colors as c', 'c.id', '=', 'pc.color_id')
+                        ->where('pc.product_id', $id)
+                        ->pluck('c.name')->filter()->unique()->values()->all();
+                    if ($colors)
+                        $options[] = ['name' => 'Color', 'values' => $colors];
+                }
             }
-            foreach ($optionsMap as $name => $values) {
-                $optionsList[] = ['name' => $name, 'values' => array_values($values)];
-            }
+        }
 
-            $variantsOut = $variants->map(function ($v) {
-                $attrs = $this->safeJson($v->attrs);
+        // 5) variantsOut: БЕЗ 'image' (фото только на уровне цвета)
+        $variantsOut = collect();
+        if ($variants->isNotEmpty()) {
+            $variantsOut = $variants->map(function ($v) use ($toArray) {
+                $attrs = $toArray($v->attrs);
                 $stock = (int) ($v->stock ?? 0);
                 return [
                     'id' => $v->id,
                     'sku' => $v->sku ?? null,
                     'barcode' => $v->barcode ?? null,
-                    'attrs' => $attrs,
+                    'attrs' => $attrs,                 // {"Color":"Black","Size":"41"}
                     'price' => (int) ($v->price ?? 0),
                     'stock' => $stock,
-                    'image' => $this->toUrl($v->image ?? null),
-                    'available' => $stock > 0,
+                    // 'image' НЕТ по нашей спецификации
                 ];
             })->values();
-
         } else {
-            // 3B) ВЕТКА: variants нет → синтезируем из product_sizes × product_colors
-            // sizes
+            // синтез (если реальных variants нет) — тоже без image
             $sizesRows = collect();
             if (Schema::hasTable('product_sizes')) {
-                $sizesHasDict = Schema::hasTable('sizes');
+                $hasDict = Schema::hasTable('sizes');
                 $sizesRows = DB::table('product_sizes as ps')
-                    ->when($sizesHasDict, fn($q) => $q->leftJoin('sizes as s', 's.id', '=', 'ps.size_id'))
+                    ->when($hasDict, fn($q) => $q->leftJoin('sizes as s', 's.id', '=', 'ps.size_id'))
                     ->where('ps.product_id', $id)
                     ->select([
                         'ps.size_id',
                         DB::raw('COALESCE(ps.count,0) as stock'),
-                        DB::raw($sizesHasDict ? 's.name as size_name' : 'NULL as size_name'),
-                    ])
-                    ->orderByRaw($sizesHasDict ? 's.name NULLS LAST' : 'ps.size_id')
-                    ->get();
+                        DB::raw($hasDict ? 's.name as size_name' : 'NULL as size_name'),
+                    ])->get();
             }
-
-            // colors
             $colorRows = collect();
             if (Schema::hasTable('product_colors') && Schema::hasTable('colors')) {
                 $colorRows = DB::table('product_colors as pc')
                     ->join('colors as c', 'c.id', '=', 'pc.color_id')
                     ->where('pc.product_id', $id)
-                    ->select([
-                        'pc.id as pc_id',
-                        'pc.color_id',
-                        'c.name as color_name',
-                    ])
-                    ->orderBy('c.name')
-                    ->get();
+                    ->select(['pc.color_id', 'c.name as color_name'])->get();
             }
-
-            // фотки по цвету (если таблица есть)
-            $colorImageByColorId = [];
-            if ($colorRows->isNotEmpty() && Schema::hasTable('product_color_images')) {
-                $colorImageByColorId = DB::table('product_color_images as pci')
-                    ->join('product_colors as pc', 'pc.id', '=', 'pci.product_color_id')
-                    ->where('pc.product_id', $id)
-                    ->select('pc.color_id', 'pci.path')
-                    ->get()
-                    ->groupBy('color_id')
-                    ->map(fn($g) => $this->toUrl(optional($g->first())->path))
-                    ->toArray();
-            }
-
-            // options
-            if ($sizesRows->isNotEmpty()) {
-                $optionsList[] = [
-                    'name' => 'Size',
-                    'values' => $sizesRows->pluck('size_name')->filter()->unique()->values()->all(),
-                ];
-            }
-            if ($colorRows->isNotEmpty()) {
-                $optionsList[] = [
-                    'name' => 'Color',
-                    'values' => $colorRows->pluck('color_name')->filter()->unique()->values()->all(),
-                ];
-            }
-
-            // синтез вариантов
-            $baseImg = $images[0] ?? $this->toUrl($product->image ?? null);
 
             if ($sizesRows->isNotEmpty() && $colorRows->isNotEmpty()) {
-                // Size × Color
                 foreach ($sizesRows as $s) {
                     foreach ($colorRows as $c) {
-                        $stock = (int) ($s->stock ?? 0); // у тебя сток на уровне размера
-                        $img = $colorImageByColorId[$c->color_id] ?? $baseImg;
-
+                        $stock = (int) ($s->stock ?? 0);
                         $variantsOut->push([
                             'id' => null,
                             'sku' => $product->p_sku ?? null,
@@ -209,13 +248,10 @@ class ProductController extends Controller
                             ],
                             'price' => (int) ($product->price ?? 0),
                             'stock' => $stock,
-                            'image' => $img,
-                            'available' => $stock > 0,
                         ]);
                     }
                 }
             } elseif ($sizesRows->isNotEmpty()) {
-                // только размеры
                 foreach ($sizesRows as $s) {
                     $stock = (int) ($s->stock ?? 0);
                     $variantsOut->push([
@@ -225,30 +261,26 @@ class ProductController extends Controller
                         'attrs' => ['Size' => (string) ($s->size_name ?? '')],
                         'price' => (int) ($product->price ?? 0),
                         'stock' => $stock,
-                        'image' => $baseImg,
-                        'available' => $stock > 0,
                     ]);
                 }
             } elseif ($colorRows->isNotEmpty()) {
-                // только цвета
                 foreach ($colorRows as $c) {
-                    $img = $colorImageByColorId[$c->color_id] ?? $baseImg;
                     $variantsOut->push([
                         'id' => null,
                         'sku' => $product->p_sku ?? null,
                         'barcode' => $product->p_barcode ?? null,
                         'attrs' => ['Color' => (string) ($c->color_name ?? '')],
                         'price' => (int) ($product->price ?? 0),
-                        'stock' => 0, // если нет стока по цвету — 0
-                        'image' => $img,
-                        'available' => false,
+                        'stock' => 0,
                     ]);
                 }
             }
         }
 
+        // 6) totalStock по сумме вариантов
         $totalStock = (int) $variantsOut->sum('stock');
 
+        // 7) Итоговый ответ строго под Product v1
         return response()->json([
             'success' => true,
             'data' => [
@@ -256,9 +288,11 @@ class ProductController extends Controller
                 'name' => $product->name,
                 'price' => (int) $product->price,
                 'description' => $product->description,
-                'images' => $images,
-                'options' => $optionsList,
-                'variants' => $variantsOut->values(),
+                'image' => $cover,        // дефолтная обложка (gallery[0] или image)
+                'gallery' => $gallery,      // общая галерея
+                'options' => $options,      // [{name:"Color",values:[...]}, {name:"Size",values:[...]}]
+                'colorImages' => $colorImages,  // {"Black": [".../black1.webp","..."], ...}
+                'variants' => $variantsOut->values(), // без image
                 'totalStock' => $totalStock,
                 'active' => (bool) $product->active,
             ],

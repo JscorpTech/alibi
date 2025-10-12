@@ -13,11 +13,10 @@ class OrderGroup extends Model
     use BaseModel;
 
     protected $fillable = [
-        // старые поля
+        // клиент из приложения
         'user_id',
         'status',
         'address_id',
-        // новые поля для POS
         'source',
         'cashier_id',
         'payment_method',
@@ -26,21 +25,15 @@ class OrderGroup extends Model
         'total',
         'comment',
         'location_id',
-        'type',                  // NEW
-        'original_group_id',     // NEW
+        'type',
+        'original_group_id',
     ];
-
-    public function location()
-    {
-        return $this->belongsTo(\App\Models\StockLocation::class, 'location_id');
-    }
 
     protected $casts = [
         'paid_at' => 'datetime',
-        'total' => 'integer',
-        'type' => 'string',
+        'total'   => 'integer',
+        'type'    => 'string',
     ];
-
 
     // --- Связи ---
 

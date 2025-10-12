@@ -9,39 +9,59 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
 {
-    use SoftDeletes;
-    use HasFactory;
-    use BaseModel;
+    use SoftDeletes, HasFactory, BaseModel;
 
-    public $fillable = [
-        'price',
-        'product_id',
-        'count',
-        'color_id',
-        'size_id',
-        'discount',
+    protected $fillable = [
         'order_group_id',
-        'original_order_id', // NEW
+        'user_id',
+        'product_id',
+        'variant_id',
+        'size_id',
+        'color_id',
+        'price',
+        'discount',          // скидка за 1 шт
+        'count',
+        'channel',           // ← оставь только если колонка есть
+        'stock_location_id', // ← оставь только если колонка есть
+        'cashier_id',        // ← оставь только если колонка есть
+        'original_order_id',
     ];
 
-    public function variant()
+    protected $casts = [
+        'order_group_id'    => 'integer',
+        'user_id'           => 'integer',
+        'product_id'        => 'integer',
+        'variant_id'        => 'integer',
+        'size_id'           => 'integer',
+        'color_id'          => 'integer',
+        'price'             => 'integer',
+        'discount'          => 'integer',
+        'count'             => 'integer',
+        'stock_location_id' => 'integer',
+        'cashier_id'        => 'integer',
+        'original_order_id' => 'integer',
+    ];
+
+    // -------- Relations --------
+
+    public function orderGroup(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Variant::class);
+        return $this->belongsTo(OrderGroup::class, 'order_group_id');
     }
 
-    /**
-     * @return float|int
-     *
-     * Get product total price
-     */
-    public function getTotalPrice(): float|int
+    public function user(): BelongsTo
     {
-        return $this->price * $this->count;
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function OrderGroup(): BelongsTo
+    public function product(): BelongsTo
     {
-        return $this->belongsTo(OrderGroup::class);
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(Variant::class, 'variant_id');
     }
 
     public function size(): BelongsTo
@@ -54,13 +74,11 @@ class Order extends Model
         return $this->belongsTo(Color::class, 'color_id');
     }
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
+    // -------- Helpers --------
 
-    public function product(): BelongsTo
+    public function getTotalPrice(): int
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        $unit = max(0, (int)$this->price - (int)$this->discount);
+        return $unit * (int)$this->count;
     }
 }

@@ -18,28 +18,29 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Get;
 use App\Models\Size;
 use App\Models\Color;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Actions;
 use Filament\Forms\Set;
-use Filament\Forms\Components\Hidden;
+
+use Filament\Forms\Components\Actions as FormActions;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use App\Services\VariantGenerator;
-use App\Filament\Resources\HtmlString;
+use Filament\Support\Enums\Alignment;      // для выравнивания add-кнопки
+use Filament\Support\Enums\ActionSize;     // для размера кнопки
 
-use Filament\Forms\Components\Grid;
-
+use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Notifications\Notification;
+use Filament\Forms\Components\{Section, Grid, Toggle, Select, Hidden, Actions, View};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Filament\Forms\Components\Placeholder;
+use Illuminate\Support\HtmlString;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 
-use Filament\Forms\Components\TagsInput;
+
+
 
 
 class ProductResource extends Resource
@@ -119,67 +120,142 @@ class ProductResource extends Resource
 
                             Forms\Components\Section::make('СМИ')
                                 ->schema([
-                                    // 📸 Главное фото — компактное
+                                    // Главное фото — как было
                                     Forms\Components\FileUpload::make('image')
-                                        ->label('Главное фото')                                // ✅ чёткий label
-                                        ->helperText('PNG/JPG/WebP, до 4 МБ. Перетащите файл или нажмите на плюс.')
+                                        ->label('Главное фото')
+                                        ->helperText('PNG/JPG/WebP, до 4 МБ.')
                                         ->directory('products')
                                         ->image()
                                         ->imageEditor()
-                                        // ->panelAspectRatio('1:1')                           // 🔕 убрать, чтобы не тянуло вверх
                                         ->panelLayout('compact')
-                                        ->imagePreviewHeight('240px')                          // ✅ одна привязка по высоте
+                                        ->imagePreviewHeight('240px')
                                         ->maxSize(4096)
                                         ->acceptedFileTypes(['image/*'])
-                                        ->extraAttributes([
-                                            'data-plus' => '1',
-                                            'style' => '--box-h:240px',                    // совпадает с imagePreviewHeight
-                                            'title' => 'Нажмите, чтобы загрузить главное фото', // ✅ нативный tooltip при hover
-                                        ])
                                         ->columnSpan(1),
 
-                                    // 🖼️ Галерея — без текста
-                                    Forms\Components\Repeater::make('images')
+
+                                    // Галерея — ПРЯМО В products.gallery
+                                    Forms\Components\FileUpload::make('gallery')
                                         ->label('Галерея')
-                                        ->helperText('Добавьте дополнительные фото товара. Первое — главное в галерее.')
-                                        ->relationship('images')
-                                        ->simple(
-                                            Forms\Components\FileUpload::make('path')
-                                                ->label('Файл')                                 // внутри simple можно скрыть визуально:
-                                                ->hiddenLabel()                                 // ← прячем, чтобы карточка была чистой
-                                                ->directory('products')
-                                                ->image()
-                                                ->imageEditor()
-                                                // ->panelAspectRatio('1:1')                    // 🔕 не смешиваем
-                                                ->panelLayout('compact')
-                                                ->imagePreviewHeight('120px')
-                                                ->maxSize(4096)
-                                                ->acceptedFileTypes(['image/*'])
-                                                ->disk('public')
-                                                ->visibility('public')
-                                                ->extraAttributes([
-                                                    'data-plus' => '1',
-                                                    'style' => '--box-h:120px',
-                                                    'title' => 'Добавить фото в галерею',  // нативный tooltip
-                                                ])
-                                        )
-                                        ->grid(3)
-                                        ->minItems(0)
-                                        ->defaultItems(0)
-                                        ->addActionLabel('Добавить фото')                       // читаемая подпись
-                                        ->addAction(
-                                            fn($action) =>
-                                            $action->icon('heroicon-o-plus')
-                                                ->tooltip('Добавить ещё изображение')        // ✅ tooltip на кнопке
-                                        )
-                                        ->reorderable()
-                                        ->collapsed(false)
-                                        ->columnSpan(2)
-                                        ->addActionAlignment('start')
+                                        ->helperText('Добавьте дополнительные фото. Первое — будет обложкой галереи.')
+                                        ->multiple()                // множественная загрузка
+                                        ->reorderable()             // можно менять порядок
+                                        ->directory('products')
+                                        ->disk('public')
+                                        ->visibility('public')
+                                        ->image()
+                                        ->imageEditor()
+                                        ->panelLayout('compact')
+                                        ->imagePreviewHeight('120px')
+                                        ->maxSize(4096)
+                                        ->acceptedFileTypes(['image/*'])
+                                        ->columnSpan(2),
                                 ])
                                 ->columns(3)
                                 ->columnSpanFull()
                                 ->compact(),
+
+                            Forms\Components\Section::make('Фото по цветам')
+                                ->schema([
+                                    Forms\Components\Actions::make([
+
+
+                                        Forms\Components\Actions\Action::make('syncColorsFromOptions')
+                                            ->label('Синхронизировать с осью Color')
+                                            ->icon('heroicon-o-arrow-path')
+                                            ->color('gray')
+                                            ->action(function (Forms\Get $get, Forms\Set $set) {
+                                                $opts = collect($get('variant_state.variant_options') ?? []);
+                                                $colors = collect($opts->firstWhere('name', 'Color')['values'] ?? [])
+                                                    ->filter()->unique()->values();
+
+                                                // текущее (в виде списка строк репитера)
+                                                $rows = collect($get('color_images') ?? []);
+
+                                                foreach ($colors as $c) {
+                                                    if (!$rows->firstWhere('color', $c)) {
+                                                        $rows->push(['color' => $c, 'paths' => [], 'cover_index' => null]);
+                                                    }
+                                                }
+
+                                                // удалим строки для убранных цветов
+                                                $rows = $rows->filter(fn($r) => in_array($r['color'] ?? null, $colors->all(), true))->values();
+                                                $set('color_images', $rows->all());
+
+                                                \Filament\Notifications\Notification::make()
+                                                    ->title('Цвета синхронизированы: ' . $colors->count())
+                                                    ->success()->send();
+
+
+                                            }),
+
+
+                                    ])->columnSpanFull(),
+
+
+
+                                    Forms\Components\Repeater::make('color_images')
+                                        ->label('Галереи по цветам')
+                                        ->schema([
+                                            Forms\Components\Select::make('color')
+                                                ->label('Цвет')
+                                                ->options(\App\Models\Color::pluck('name', 'name')->all())
+                                                ->searchable()->preload()->required()->columnSpan(12),
+
+                                            Forms\Components\FileUpload::make('paths')
+                                                ->label('Картинки этого цвета')
+                                                ->multiple()->reorderable()->live()
+                                                ->directory('products')->disk('public')->visibility('public')
+                                                ->image()->imageEditor()
+                                                ->panelLayout('compact')->imagePreviewHeight('100px')
+                                                ->maxSize(4096)->acceptedFileTypes(['image/*'])
+                                                ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                                                    $count = is_countable($state) ? count($state) : 0;
+                                                    $idx = (int) ($get('cover_index') ?? 0);
+                                                    if ($count === 0) {
+                                                        $set('cover_index', null);
+                                                    } elseif ($idx < 0 || $idx >= $count) {
+                                                        $set('cover_index', 0);
+                                                    }
+                                                })
+                                                ->columnSpan(12),
+
+                                            Forms\Components\Select::make('cover_index')
+                                                ->label('Обложка цвета')
+                                                ->helperText('Если не выбрано — возьмём первое изображение.')
+                                                ->options(function (Forms\Get $get) {
+                                                    $paths = (array) ($get('paths') ?? []);
+                                                    $count = count($paths);
+                                                    if ($count === 0)
+                                                        return [];
+                                                    return collect(range(0, $count - 1))
+                                                        ->mapWithKeys(fn($i) => [$i => 'Фото ' . ($i + 1)])
+                                                        ->all();
+                                                })
+                                                ->disabled(fn(Forms\Get $get) => empty($get('paths')))
+                                                ->native(false)->reactive()->columnSpan(12),
+                                        ])
+                                        ->columns(12)
+                                        ->default([])
+                                        ->reorderable()
+                                        ->collapsible()
+                                        ->itemLabel(fn(array $state) => $state['color'] ?? 'Новый цвет')
+                                ])
+                                ->collapsible()
+                                ->compact()
+                                ->columnSpanFull(),
+
+
+
+
+
+
+
+
+
+
+
+
                             Forms\Components\Section::make('Цена')
                                 ->schema([
                                     Forms\Components\TextInput::make('price')
@@ -189,14 +265,11 @@ class ProductResource extends Resource
                                         ->numeric()->default(0)->prefix('%')
                                         ->label('Скидка'),
                                     Forms\Components\TextInput::make('cost_price')
-                                        ->numeric()->default(0)->prefix('сум')
+                                        ->default(0)->prefix('сум')
                                         ->label('Себестоимость')
                                         ->helperText('Внутренний учёт, не видно клиенту.'),
-                                    Forms\Components\TextInput::make('sku')
-                                        ->maxLength(64)
-                                        ->unique(ignoreRecord: true)
-                                        ->label('SKU (артикул)'),
-                                ])->columns(4),
+
+                                ])->columns(3),
 
                             Forms\Components\Section::make('Организация')
                                 ->extraAttributes(['class' => 'overflow-visible'])   // 👈 важно
@@ -224,99 +297,298 @@ class ProductResource extends Resource
                                 ])
                                 ->columns(2),
 
-                            // === 1) Варианты (оси) ===
 
-                            Forms\Components\Section::make('Варианты (размеры и остатки)')
+
+
+
+
+
+
+
+
+
+                            Forms\Components\Section::make('Варианты')
                                 ->schema([
-                                    Forms\Components\Repeater::make('productSizes')
-                                        ->relationship('productSizes')
-                                        ->label('Размеры и остатки')
-                                        ->addActionLabel('Добавить размер')
+                                    // Плейсхолдер (показывается, когда нет осей)
+                                    // Forms\Components\View::make('filament.products.variant-placeholder')
+                                    //     ->visible(fn(Forms\Get $get) => empty($get('variant_options')))
+                                    //     ->columnSpanFull(),
+
+
+
+                                    // Repeater с осями
+                                    Forms\Components\Repeater::make('variant_options')
+                                        ->label('')
+                                        ->default([])
+                                        // Кастомизируем кнопку "Добавить"
+                                        ->addAction(
+                                            fn(Action $action) =>
+                                            $action
+                                                ->icon('heroicon-m-plus')
+                                                ->label(fn(Get $get): string => empty($get('variant_options'))
+                                                    ? 'Добавьте такие параметры, как размер или цвет'
+                                                    : 'Добавить ещё один вариант')
+                                                ->button()
+                                                ->extraAttributes([
+                                                    'class' => 'text-xs px-3 py-1.5 rounded-lg text-gray-700 hover:bg-gray-100 transition',
+                                                ])
+                                        )
+                                        ->addActionAlignment(Alignment::Start) // выравнивание слева
                                         ->collapsible(false)
-                                        ->reorderable(false)
-                                        ->cloneable(false)
-                                        ->itemLabel(false)
-                                        ->defaultItems(0)
-                                        ->columns(12) // 👈 одна «полоса» на 12 колонок
+                                        ->columns(12)
+                                        ->live()
                                         ->schema([
-                                            Forms\Components\Select::make('size_id')
-                                                ->relationship('size', 'name')
-                                                ->native()
+                                            Forms\Components\Select::make('name')
+                                                ->label('Название варианта')
+                                                ->options(['Size' => 'Размер', 'Color' => 'Цвета'])
                                                 ->required()
-                                                ->label('Размер')
-                                                ->columnSpan(4),          // |---- size ----|
+                                                ->native(false)
+                                                ->columnSpan(12)
+                                                ->reactive()
+                                                ->afterStateUpdated(fn($state, Forms\Set $set) => $set('values', [])),
 
-                                            Forms\Components\TextInput::make('count')
-                                                ->numeric()
-                                                ->minValue(0)
-                                                ->default(0)
-                                                ->label('Остаток')
-                                                ->columnSpan(2),          // |-- count --|
-
-                                            Forms\Components\TextInput::make('sku')
-                                                ->disabled()
-                                                ->dehydrated(false)
-                                                ->label('SKU варианта')
-                                                ->placeholder('Автогенерация')
-                                                ->columnSpan(3),          // |--- sku ---|
-
-                                            Forms\Components\TextInput::make('barcode')
-                                                ->disabled()
-                                                ->dehydrated(false)
-                                                ->label('Barcode (EAN-13)')
-                                                ->placeholder('Автогенерация')
-                                                ->columnSpan(3),          // |--- barcode ---|
-                                        ])
-                                        // центрируем по вертикали и добавляем зазор между колонками
-                                        ->extraAttributes(['class' => 'items-center gap-3']),
-                                ]),
+                                            Forms\Components\Select::make('values')
+                                                ->label('Значения')
+                                                ->multiple()
+                                                ->searchable()
+                                                ->preload()
+                                                ->reactive()
+                                                ->columnSpan(12)
+                                                ->options(function (Forms\Get $get) {
+                                                    return match ($get('name')) {
+                                                        'Size' => \App\Models\Size::pluck('name', 'name')->all(),
+                                                        'Color' => \App\Models\Color::pluck('name', 'name')->all(),
+                                                        default => [],
+                                                    };
+                                                })
+                                                ->required()
+                                                ->hidden(fn(Forms\Get $get) => blank($get('name'))),
 
 
-                            Forms\Components\Section::make('Цвета')
-                                ->collapsible()
-                                ->schema([
-                                    Forms\Components\Repeater::make('colors')
-                                        ->relationship('colors')
-                                        ->addActionLabel('Добавить цвет')
-                                        ->reorderable()
-                                        ->defaultItems(0)
-                                        ->grid(1)
-                                        ->columns(1)
-                                        ->cloneable(false)
-                                        ->schema([
-                                            Forms\Components\Grid::make(12)
-                                                ->extraAttributes(['class' => 'items-center gap-3']) // всё по одной линии, плотнее
-                                                ->schema([
-                                                    // 🖼 превью слева (64px)
-                                                    Forms\Components\FileUpload::make('path')
-                                                        ->directory('products')
-                                                        ->image()
-                                                        ->imageEditor()
-                                                        ->panelAspectRatio('1:1')
-                                                        ->panelLayout('compact')
-                                                        ->imagePreviewHeight('120px')
-                                                        ->maxSize(4096)
-                                                        ->label('')                           // лучше пустую строку, не false
-                                                        ->acceptedFileTypes(['image/*'])
-                                                        ->disk('public')
-                                                        ->visibility('public')
-                                                        ->extraAttributes(['data-plus' => '1'])
-                                                        ->columnSpan(2),
 
-                                                    // 🎨 выбор цвета
-                                                    Forms\Components\Select::make('color_id')
-                                                        ->label('Цвет')
-                                                        ->relationship('color', 'name')
-                                                        ->searchable()
-                                                        ->preload()
-                                                        ->required()
-                                                        ->columnSpan(4),
+                                            // 👇 Кнопка "Готово" внутри ЭЛЕМЕНТА репитера — сразу под полем "Значения", справа
+                                            FormActions::make([
+                                                Action::make('doneOptions')
+                                                    ->label('Готово')
+                                                    ->icon('heroicon-o-check')
+                                                    ->button()
+                                                    ->size(ActionSize::Small)
+                                                    ->extraAttributes([
+                                                        'class' => 'text-white px-3 py-1.5 rounded-lg text-sm focus:ring-0 focus:outline-none border border-transparent transition',
+                                                        'style' => 'background-color: #000; color: #fff;',
+                                                    ])
+                                                    ->action(function (Forms\Get $get, Forms\Set $set) {
+                                                        // 1) читаем все оси из корня репитера
+                                                        $opts = collect($get('../../variant_options') ?? [])
+                                                            ->filter(fn($o) => !empty($o['name']) && !empty($o['values']))
+                                                            ->values()
+                                                            ->all();
 
+                                                        if (empty($opts)) {
+                                                            $set('variants_draft', []);
+                                                            $set('variants_editor', []);
+                                                            $set('stocks', []); // очистим карту количеств
+                                                            return;
+                                                        }
 
-                                                ]),
+                                                        // 2) декартово произведение значений осей -> список attrs
+                                                        $result = [[]];
+                                                        foreach ($opts as $opt) {
+                                                            $tmp = [];
+                                                            foreach ($result as $r) {
+                                                                foreach ((array) $opt['values'] as $val) {
+                                                                    $tmp[] = array_merge($r, [$opt['name'] => $val]);
+                                                                }
+                                                            }
+                                                            $result = $tmp;
+                                                        }
+
+                                                        // 3) старые количества, чтобы не потерять введённые ранее
+                                                        $oldStocks = (array) ($get('../../stocks') ?? []);
+
+                                                        // мини-хелпер: ключ строки (id:ID или attrs:HASH)
+                                                        $keyOf = function (array $row): string {
+                                                            if (!empty($row['id'])) {
+                                                                return 'id:' . (int) $row['id'];
+                                                            }
+                                                            $attrs = (array) ($row['attrs'] ?? []);
+                                                            ksort($attrs);
+                                                            return 'attrs:' . substr(md5(json_encode($attrs, JSON_UNESCAPED_UNICODE)), 0, 12);
+                                                        };
+
+                                                        // 4) собираем строки редактора + карту stocks
+                                                        $rows = [];
+                                                        $stocks = [];
+
+                                                        foreach ($result as $attrs) {
+                                                            // нормализуем и делаем title
+                                                            ksort($attrs);
+                                                            $title = implode(' / ', array_map(
+                                                                fn($k, $v) => "{$k}: {$v}",
+                                                                array_keys($attrs),
+                                                                array_values($attrs)
+                                                            ));
+
+                                                            $row = [
+                                                                'title' => $title,
+                                                                'attrs' => $attrs,
+                                                                'price' => 0,
+                                                                'stock' => 0,
+                                                                'available' => true,
+                                                                'sku' => null,
+                                                            ];
+                                                            $rows[] = $row;
+
+                                                            // ключ для stocks и перенос старого значения если было
+                                                            $rk = $keyOf($row);
+                                                            $stocks[$rk] = isset($oldStocks[$rk]) ? (int) $oldStocks[$rk] : 0;
+                                                        }
+
+                                                        // 5) записываем в состояние редактора
+                                                        $set('../../variants_draft', $rows);
+                                                        $set('../../variants_editor', $rows);
+                                                        $set('../../stocks', $stocks); // 👈 важное: карта количеств
+                                            
+                                                        \Filament\Notifications\Notification::make()
+                                                            ->title('Варианты созданы: ' . count($rows))
+                                                            ->success()
+                                                            ->send();
+                                                    }),
+                                            ])
+                                                ->alignment('right')
+                                                ->visible(true)
+                                                ->extraAttributes(['class' => 'mt-2'])
+                                                ->columnSpan(12),
                                         ]),
+
+
+
+                                    Forms\Components\View::make('filament.products.variant-existing')
+                                        ->visible(fn($record) => (bool) $record)
+                                        ->reactive()
+                                        ->viewData([
+                                            'variants' => fn($record) => $record
+                                                ? $record->variants()
+                                                    ->orderByDesc('id')
+                                                    ->get(['id', 'sku', 'price', 'stock', 'available', 'attrs', 'barcode'])
+                                                    ->values()
+                                                    ->toArray()
+                                                    ->map(function ($v) use ($record) {
+                                                        $attrs = (array) $v->attrs;
+
+                                                        // мини-хелпер для абсолютного URL
+                                                        $toUrl = function (?string $p): ?string {
+                                                            if (!$p)
+                                                                return null;
+                                                            return str_starts_with($p, 'http') ? $p : \Storage::url($p);
+                                                        };
+
+                                                        $color = $attrs['Color'] ?? null;
+                                                        $cover = null;
+
+                                                        if ($color && !empty($record->color_images[$color])) {
+                                                            $ci = $record->color_images[$color];
+                                                            $cover = is_array($ci) ? ($ci[0] ?? null) : $ci;
+                                                        }
+
+                                                        if (!$cover) {
+                                                            $gallery = is_array($record->gallery) ? $record->gallery : [];
+                                                            $cover = $gallery[0] ?? $record->image ?? null;
+                                                        }
+
+                                                        $cover = $toUrl($cover);
+
+                                                        $attrsText = $attrs
+                                                            ? implode(' • ', array_map(fn($k, $val) => "{$k}: {$val}", array_keys($attrs), array_values($attrs)))
+                                                            : '—';
+
+                                                        return [
+                                                            'id' => $v->id,
+                                                            'title' => $attrsText,
+                                                            'attrs' => $attrsText,
+                                                            'sku' => $v->sku,
+                                                            'barcode' => (string) ($v->barcode ?? ''), // 👈 явно строка
+                                                            'price' => (int) ($v->price ?? 0),
+                                                            'stock' => (int) ($v->stock ?? 0),
+                                                            'available' => (bool) $v->available,
+                                                            'cover' => $cover,
+                                                        ];
+                                                    })
+
+                                                : [],
+                                        ])
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Grid::make(12)->schema([
+                                        Forms\Components\Select::make('group_by')
+                                            ->label('Группировать по')
+                                            ->options(['Size' => 'Size', 'Color' => 'Color'])
+                                            ->native(false)
+                                            ->reactive()
+                                            ->afterStateUpdated(fn(Forms\Get $get, Forms\Set $set) => $set('filter_value', null) | $this->rebuildVariantGroups($get, $set))
+                                            ->columnSpan(3),
+
+                                        Forms\Components\Select::make('filter_value')
+                                            ->label('Значение')
+                                            ->options(function (Forms\Get $get) {
+                                                $rows = (array) ($get('variants_editor') ?? []);
+                                                $group = (string) ($get('group_by') ?? '');
+                                                if ($group === '')
+                                                    return [];
+                                                return collect($rows)->pluck("attrs.$group")->filter()->unique()->sort()->mapWithKeys(fn($v) => [$v => $v])->all();
+                                            })
+                                            ->native(false)
+                                            ->reactive()
+                                            ->afterStateUpdated(fn(Forms\Get $get, Forms\Set $set) => $this->rebuildVariantGroups($get, $set))
+                                            ->columnSpan(4),
+
+                                        Forms\Components\TextInput::make('search')
+                                            ->label('Поиск')
+                                            ->placeholder('SKU, размер, цвет…')
+                                            ->reactive()
+                                            ->afterStateUpdated(fn(Forms\Get $get, Forms\Set $set) => $this->rebuildVariantGroups($get, $set))
+                                            ->columnSpan(5),
+
+                                        Forms\Components\Hidden::make('variants_grouped')->default([])->dehydrated(false)->reactive(),
+                                    ])
+                                        ->visible(fn(Forms\Get $get) => filled($get('variants_editor')))
+                                        ->columnSpanFull(),
+
+
+                                    Forms\Components\View::make('filament.products.variant-list-grouped')
+                                        ->visible(fn(Forms\Get $get) => filled($get('variants_editor')))
+                                        ->viewData(fn(Forms\Get $get) => [
+                                            'rows' => $get('variants_filtered') ?: ($get('variants_editor') ?? []),
+                                            'groupBy' => (string) ($get('group_by') ?? 'Size'),
+                                            'stocks' => (array) ($get('../../stocks') ?? []),  // 👈 ИСПРАВЛЕНО: используем ../../stocks
+                                        ])
+                                        ->reactive()
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Repeater::make('variants_editor')
+                                        ->visible(false)
+                                        ->default(fn(Forms\Get $get) => $get('variants_editor') ?? [])
+                                        ->dehydrated(true)
+                                        ->reactive()
+                                        ->schema([]),
+
+                                    Forms\Components\Hidden::make('variants_draft')->default([])->dehydrated(false)->reactive(),
+
+
+
+
                                 ])
-                                ->columnSpanFull()
+                                // важно: все ключи внутри этой секции будут под variant_state.*
+                                ->statePath('variant_state')
+                                ->columnSpanFull(),
+
+                            Forms\Components\Hidden::make('variant_state.stocks')
+                                ->default([])
+                                ->dehydrated(false)
+                                ->reactive(),
+
+
+
                         ]),
 
 
@@ -460,5 +732,143 @@ class ProductResource extends Resource
             'create' => Pages\CreateProduct::route('/create'),
             'edit' => Pages\EditProduct::route('/{record}/edit'),
         ];
+    }
+
+    // ВНИЗУ ProductResource (или в отдельный трейт) — helper для сборки групп
+    public static function buildVariantsGrouped(array $rows, string $groupBy, string $filterValue, string $q): array
+    {
+        // помечаем исходные индексы
+        $withIdx = [];
+        foreach ($rows as $i => $r) {
+            $withIdx[] = $r + ['_i' => $i];
+        }
+
+        // фильтры
+        $filtered = collect($withIdx)->filter(function ($r) use ($groupBy, $filterValue, $q) {
+            if ($groupBy && $filterValue !== '') {
+                $v = (string) ($r['attrs'][$groupBy] ?? '');
+                if (strcasecmp($v, $filterValue) !== 0)
+                    return false;
+            }
+            if ($q !== '') {
+                $hay = mb_strtolower(($r['title'] ?? '') . ' ' . ($r['sku'] ?? ''));
+                if (!str_contains($hay, mb_strtolower($q)))
+                    return false;
+            }
+            return true;
+        });
+
+        // сортировка
+        $sorted = $filtered->sort(function ($a, $b) use ($groupBy) {
+            if ($groupBy) {
+                $ga = (string) ($a['attrs'][$groupBy] ?? '');
+                $gb = (string) ($b['attrs'][$groupBy] ?? '');
+                if ($ga !== $gb)
+                    return strcmp($ga, $gb);
+            }
+            return strcmp((string) ($a['title'] ?? ''), (string) ($b['title'] ?? ''));
+        })->values();
+
+        // нет группировки — одна общая группа
+        if ($groupBy === '') {
+            return [
+                [
+                    'key' => 'Все',
+                    'items' => $sorted->map(fn($r) => [
+                        'idx' => $r['_i'],
+                        'title' => (string) ($r['title'] ?? 'Вариант'),
+                        'sku' => (string) ($r['sku'] ?? ''),
+                    ])->all(),
+                ]
+            ];
+        }
+
+        // группируем по оси
+        return $sorted->groupBy(fn($r) => (string) ($r['attrs'][$groupBy] ?? '—'))
+            ->map(function ($items, $key) {
+                return [
+                    'key' => (string) $key,
+                    'items' => $items->map(fn($r) => [
+                        'idx' => $r['_i'],
+                        'title' => (string) ($r['title'] ?? 'Вариант'),
+                        'sku' => (string) ($r['sku'] ?? ''),
+                    ])->values()->all(),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function rebuildVariantGroups(Forms\Get $get, Forms\Set $set): void
+    {
+        $rows = (array) ($get('variants_editor') ?? []);
+        $group = (string) ($get('group_by') ?? '');
+        $value = (string) ($get('filter_value') ?? '');
+        $q = mb_strtolower((string) ($get('search') ?? ''));
+
+        $groups = [];
+        foreach ($rows as $r) {
+            // фильтры
+            if ($group !== '' && (!isset($r['attrs'][$group]) || ($value !== '' && strcasecmp((string) $r['attrs'][$group], $value) !== 0))) {
+                continue;
+            }
+            if ($q !== '') {
+                $hay = mb_strtolower(($r['title'] ?? '') . ' ' . ($r['sku'] ?? ''));
+                if (!str_contains($hay, $q))
+                    continue;
+            }
+
+            $key = $group !== '' ? (string) ($r['attrs'][$group] ?? '—') : '—';
+            $groups[$key][] = $r;
+        }
+
+        // сортировка групп и элементов
+        ksort($groups, SORT_NATURAL | SORT_FLAG_CASE);
+        foreach ($groups as &$items) {
+            usort($items, fn($a, $b) => strcmp((string) ($a['title'] ?? ''), (string) ($b['title'] ?? '')));
+        }
+        $set('variants_grouped', $groups);
+    }
+
+    private static function autoRebuildVariants(Forms\Get $get, Forms\Set $set): void
+    {
+        $opts = collect($get('variant_options') ?? [])
+            ->filter(fn($o) => !empty($o['name']) && !empty($o['values']))
+            ->values()->all();
+
+        if (empty($opts)) {
+            $set('variants_draft', []);
+            $set('variants_editor', []);
+            $set('variants_filtered', []);
+            return;
+        }
+
+        $result = [[]];
+        foreach ($opts as $opt) {
+            $tmp = [];
+            foreach ($result as $r) {
+                foreach ((array) $opt['values'] as $val) {
+                    $tmp[] = array_merge($r, [$opt['name'] => $val]);
+                }
+            }
+            $result = $tmp;
+        }
+
+        $rows = [];
+        foreach ($result as $attrs) {
+            $title = implode(' / ', array_map(fn($k, $v) => "{$k}: {$v}", array_keys($attrs), array_values($attrs)));
+            $rows[] = [
+                'title' => $title,
+                'attrs' => $attrs,
+                'price' => 0,
+                'stock' => 0,
+                'available' => true,
+                'sku' => null,
+            ];
+        }
+
+        $set('variants_draft', $rows);
+        $set('variants_editor', $rows);
+        $set('variants_filtered', $rows);
     }
 }
