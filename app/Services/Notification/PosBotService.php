@@ -1,7 +1,7 @@
 <?php
 
 // app/Services/PosBotService.php
-namespace App\Services;
+namespace App\Services\Notification;
 
 use SergiX44\Nutgram\Nutgram;
 

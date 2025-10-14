@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Helpers;
+namespace App\Support\Helpers;
 
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;

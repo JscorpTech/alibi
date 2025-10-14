@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Helpers;
+namespace App\Support\Helpers;
 
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Response;
