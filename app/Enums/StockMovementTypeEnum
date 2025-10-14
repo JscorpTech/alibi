@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Enums;
+
+enum StockMovementTypeEnum: string
+{
+    case SALE_POS = 'sale_pos';
+    case SALE_APP = 'sale_app';
+    case RETURN_POS = 'return_pos';
+    case RETURN_APP = 'return_app';
+    case CANCEL_POS = 'cancel_pos';
+    case CANCEL_APP = 'cancel_app';
+    case RESERVE_APP = 'reserve_app';
+    case RELEASE_RESERVE = 'release_reserve';
+    case PURCHASE = 'purchase';
+    case ADJUSTMENT = 'adjustment';
+    case DAMAGE = 'damage';
+    case INVENTORY = 'inventory';
+}

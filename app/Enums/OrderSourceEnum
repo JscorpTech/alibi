@@ -1,0 +1,9 @@
+<?php
+
+namespace App\Enums;
+
+enum OrderSourceEnum: string
+{
+    case POS = 'pos';
+    case APP = 'app';
+}
