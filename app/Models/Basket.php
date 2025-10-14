@@ -11,44 +11,80 @@ class Basket extends Model
     use HasFactory;
     use BaseModel;
 
-    public $fillable = [
-        'product_id',
+    // теперь работаем через variant_id
+    protected $fillable = [
         'user_id',
-        'size_id',
-        'color_id',
+        'product_id',
+        'variant_id',
         'count',
     ];
+
+    /* ===== Связи ===== */
 
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
 
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(Variant::class, 'variant_id');
+    }
+
+    // (Опционально) Оставляем пустые-заглушки, чтобы старый код не падал, если вдруг где-то вызывается:
     public function color(): BelongsTo
     {
-        return $this->belongsTo(Color::class);
+        return $this->belongsTo(Color::class)->whereRaw('1=0'); // не используется
     }
-
     public function size(): BelongsTo
     {
-        return $this->belongsTo(Size::class);
+        return $this->belongsTo(Size::class)->whereRaw('1=0'); // не используется
     }
 
-    public function getTotalPrice(): float|int
+    /* ===== Цены/итоги (логика через variant) ===== */
+
+    /**
+     * Приоритет цены:
+     *  unit_price = variant.price > 0 ? variant.price : product.price
+     */
+    public function unitPrice(): int
     {
-        try {
-            return (int) $this->product->price * $this->count;
-        } catch (\Throwable $e) {
-            return 0;
-        }
+        $p = (int) ($this->product->price ?? 0);
+        $v = (int) ($this->variant->price ?? 0);
+        return $v > 0 ? $v : $p;
     }
 
-    public function getProductDiscountPrice(): float|int
+    /**
+     * Итого по строке с учётом count
+     * original   = product.price * count
+     * discounted = unitPrice()   * count
+     */
+    public function getLineTotals(): array
     {
-        try {
-            return $this->product->getDiscountNumber() * $this->count;
-        } catch (\Throwable $e) {
-            return 0;
-        }
+        $count = (int) $this->count;
+        $pPrice = (int) ($this->product->price ?? 0);
+        $applied = $this->unitPrice();
+
+        return [
+            'original' => $pPrice * $count,
+            'discounted' => $applied * $count,
+        ];
+    }
+
+    /** Совместимость со старым кодом: возвращаем сумму к оплате по строке */
+    public function getTotalPrice(): int
+    {
+        return $this->getLineTotals()['discounted'];
+    }
+
+    /**
+     * Совместимость:
+     * раньше возвращалась "сумма со скидкой", теперь это просто discounted.
+     * Если хочешь вернуть "сумму скидки", верни: original - discounted.
+     */
+    public function getProductDiscountPrice(): int
+    {
+        $t = $this->getLineTotals();
+        return $t['discounted']; // или ($t['original'] - $t['discounted']) — если нужна разница
     }
 }

@@ -1,16 +1,18 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Clusters\Products\Resources;
 
 use App\Enums\GenderEnum;
 use App\Enums\ProductStatusEnum;
 use App\Filament\Resources\ProductResource\Pages;
+use App\Filament\Clusters\Products;
+use Filament\Resources\Resource;
 use App\Models\Product;
 use App\Models\SubCategory;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -20,6 +22,9 @@ use App\Models\Size;
 use App\Models\Color;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Set;
+
+
+
 
 use Filament\Forms\Components\Actions as FormActions;
 use Illuminate\Support\Arr;
@@ -45,11 +50,11 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ProductResource extends Resource
 {
-    protected static ?string $model = Product::class;
+    protected static ?string $navigationGroup = 'Products';
+    protected static ?string $navigationLabel = 'Products';
+    protected static ?string $navigationIcon = 'heroicon-o-tag';
 
-    protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
 
-    protected static ?string $navigationLabel = 'Maxsulotlar';
 
     // app/Filament/Resources/ProductResource.php
     public static function canCreate(): bool
@@ -728,9 +733,10 @@ class ProductResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProducts::route('/'),
-            'create' => Pages\CreateProduct::route('/create'),
-            'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'index' => \App\Filament\Clusters\Products\Resources\ProductResource\Pages\ListProducts::route('/'),
+            'create' => \App\Filament\Clusters\Products\Resources\ProductResource\Pages\CreateProduct::route('/create'),
+            'edit' => \App\Filament\Clusters\Products\Resources\ProductResource\Pages\EditProduct::route('/{record}/edit'),
+            // 'sales' => \App\Filament\Clusters\Products\Resources\ProductResource\Pages\ProductSalesReport::route('/{record}/sales-report'),
         ];
     }
 

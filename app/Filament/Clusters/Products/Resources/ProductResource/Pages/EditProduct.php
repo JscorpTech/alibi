@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\ProductResource\Pages;
+namespace App\Filament\Clusters\Products\Resources\ProductResource\Pages;
 
-use App\Filament\Resources\ProductResource;
+use App\Filament\Clusters\Products\Resources\ProductResource;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Actions;
 use Filament\Notifications\Notification;

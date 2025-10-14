@@ -9,15 +9,29 @@ use App\Filament\Pages\POS\{
     CustomerTrait,
     ReturnTrait,
     CheckoutTrait,
-    HelpersTrait
+    HelpersTrait,
+    ReceiptTrait  // ✅ DOBAV' ETO
 };
 
 class Pos extends Page
 {
-    use CartTrait, SearchTrait, CustomerTrait, ReturnTrait, CheckoutTrait, HelpersTrait;
+    use CartTrait,
+        SearchTrait,
+        CustomerTrait,
+        ReturnTrait,
+        CheckoutTrait,
+        HelpersTrait,
+        ReceiptTrait;  // ✅ I ETO
 
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
-    protected static ?string $navigationGroup = 'Продажи';
     protected static ?string $navigationLabel = 'Касса (POS)';
     protected static string $view = 'filament.pages.pos';
+
+    protected static ?string $navigationGroup = null;
+    protected static ?int $navigationSort = -100000;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return true;
+    }
 }

@@ -42,6 +42,7 @@ class OrderGroup extends Model
     {
         return $this->belongsTo(User::class);
     }
+    
 
     /** Кассир (кто провёл продажу в POS) */
     public function cashier(): BelongsTo

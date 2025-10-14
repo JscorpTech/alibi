@@ -58,7 +58,7 @@ class User extends Authenticatable implements HasName
      */
     protected $casts = [
         'verified_at' => 'datetime',
-        'password'    => 'hashed',
+        'password' => 'hashed',
     ];
 
     public function address(): BelongsTo
@@ -95,6 +95,7 @@ class User extends Authenticatable implements HasName
     {
         return $this->getAttributeValue('email') ?? __('None');
     }
+
 
     /**
      * @param $panel

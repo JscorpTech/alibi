@@ -28,22 +28,30 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'order_group_id'    => 'integer',
-        'user_id'           => 'integer',
-        'product_id'        => 'integer',
-        'variant_id'        => 'integer',
-        'size_id'           => 'integer',
-        'color_id'          => 'integer',
-        'price'             => 'integer',
-        'discount'          => 'integer',
-        'count'             => 'integer',
+        'order_group_id' => 'integer',
+        'user_id' => 'integer',
+        'product_id' => 'integer',
+        'variant_id' => 'integer',
+        'size_id' => 'integer',
+        'color_id' => 'integer',
+        'price' => 'integer',
+        'discount' => 'integer',
+        'count' => 'integer',
         'stock_location_id' => 'integer',
-        'cashier_id'        => 'integer',
+        'cashier_id' => 'integer',
         'original_order_id' => 'integer',
     ];
+    protected $appends = ['variant_image_url'];
 
+    public function getVariantImageUrlAttribute(): ?string
+    {
+        return $this->variant?->coverUrl();
+    }
     // -------- Relations --------
-
+    public function group()
+    {
+        return $this->belongsTo(\App\Models\OrderGroup::class, 'order_group_id');
+    }
     public function orderGroup(): BelongsTo
     {
         return $this->belongsTo(OrderGroup::class, 'order_group_id');
@@ -78,7 +86,7 @@ class Order extends Model
 
     public function getTotalPrice(): int
     {
-        $unit = max(0, (int)$this->price - (int)$this->discount);
-        return $unit * (int)$this->count;
+        $unit = max(0, (int) $this->price - (int) $this->discount);
+        return $unit * (int) $this->count;
     }
 }

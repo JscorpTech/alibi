@@ -15,7 +15,7 @@ class OfflineClientResource extends Resource
     protected static ?string $model = OfflineClient::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-plus';
-    protected static ?string $navigationGroup = 'Продажи';
+    // protected static ?string $navigationGroup = 'Продажи';
     protected static ?string $navigationLabel = 'Офлайн-клиенты';
 
     public static function form(Form $form): Form

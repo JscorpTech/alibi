@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\ProductResource\Pages;
+namespace App\Filament\Clusters\Products\Resources\ProductResource\Pages;
 
-use App\Filament\Resources\ProductResource;
+
+use App\Filament\Clusters\Products\Resources\ProductResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\DB;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;

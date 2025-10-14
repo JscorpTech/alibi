@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Variant extends Model
 {
@@ -87,6 +89,32 @@ class Variant extends Model
                 $v->available = (int) $v->stock > 0;
             }
         });
+    }
+
+    public function coverUrl(): ?string
+    {
+        // 1) Фото у варианта
+        $path = $this->image['path'] ?? null; // благодаря getImageAttribute()
+        if ($path) {
+            return Str::startsWith($path, ['http://', 'https://']) ? $path : Storage::url($path);
+        }
+
+        // 2) Фото по цвету из продукта -> coverFor(Color)
+        $product = $this->relationLoaded('product') ? $this->product : $this->product()->first();
+        if ($product) {
+            $color = $this->getColor();
+            $cover = $product->coverFor($color) ?? ($product->gallery[0] ?? $product->image);
+            if ($cover) {
+                return Str::startsWith($cover, ['http://', 'https://']) ? $cover : Storage::url($cover);
+            }
+        }
+        return null;
+    }
+
+    /** чтобы можно было обращаться как $variant->cover_url */
+    public function getCoverUrlAttribute(): ?string
+    {
+        return $this->coverUrl();
     }
     // app/Models/Variant.php
     public function getImageAttribute($value)

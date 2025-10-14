@@ -16,6 +16,10 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @var $collection AnonymousResourceCollection
@@ -63,69 +67,118 @@ class ProductController extends Controller
     /**
      * One product view
      *
+     * GET /api/v1/products/{id}
+     *
      * @param Request $request
-     * @param $id
+     * @param int|string $id
      * @return JsonResponse
      * @throws Exception
-     * @response array{success:true,data:ProductResource,meta:array{is_basket:bool,is_save:bool,products:array{category:array{id:int,name:string},data:AnonymousResourceCollection<ProductResource>},sizeInfo:array{image_1:string,image_2:string,name:string}}}
+     * @response array{
+     *   success:true,
+     *   data:ProductResource,
+     *   meta:array{
+     *     is_basket:bool,
+     *     is_save:bool,
+     *     products:array<int, array{
+     *       category:array{id:int,name:string},
+     *       data:AnonymousResourceCollection<ProductListResource>
+     *     }>
+     *   }
+     * }
      */
+
     public function view(Request $request, $id): JsonResponse
     {
-        $product = Product::findOrField($id);
-        $product->views = $product->views + 1;
-        $product->save();
-        $product = ProductResource::make($product);
+        $product = Product::query()
+            ->with([
+                'variants:id,product_id,sku,barcode,price,stock,attrs',
+                'brand',
+                'tags',
+                // ✅ UDALIT' LEGACY (esli ne nuzhno):
+                // 'options.items', 'colors', 'sizes', 'images',
+            ])
+            ->findOrField($id);
+
+        $product->increment('views');
+
         $categories = $this->service->getOffers($product);
+        $resource = ProductResource::make($product);
+
         $products = [];
         foreach ($categories as $category) {
             $products[] = [
-                'category' => [
-                    'id'   => $category->id,
-                    'name' => $category->name,
-                ],
+                'category' => ['id' => $category->id, 'name' => $category->name],
                 'data' => ProductListResource::collection($category->products),
             ];
         }
 
-        $sizeInfo = $product->sizeImage ?? SizeInfo::query()->first();
+        $user = Auth::guard('sanctum')->user();
         $meta = [
             'products' => $products,
-            'sizeInfo' => $sizeInfo,
-            'is_basket' => Auth::guard("sanctum")->user()?->baskets()->where(['product_id' => $id])->exists() ?? false,
-            'is_save'   => Auth::guard("sanctum")->user()?->likes()->where(['product_id' => $id])->exists() ?? false,
+            'is_basket' => $user?->baskets()->where('product_id', $id)->exists() ?? false,
+            'is_save' => $user?->likes()->where('product_id', $id)->exists() ?? false,
         ];
 
-        return $this->success(data: $product, meta: $meta);
+        return $this->success(data: $resource, meta: $meta);
     }
+
 
     public function getMeta(Request $request, $id): JsonResponse
     {
+        $user = Auth::guard('sanctum')->user();
+
+        // ✅ ULUCHSHENIYE: Odin zapros vmesto dvuh
         $response = [
-            'is_basket' => Auth::user()?->baskets()->where(['product_id' => $id])->exists() ?? false,
-            'is_save'   => Auth::user()?->likes()->where(['product_id' => $id])->exists() ?? false,
+            'is_basket' => false,
+            'is_save' => false,
         ];
+
+        if ($user) {
+            $basket = $user->baskets()->where('product_id', $id)->exists();
+            $save = $user->likes()->where('product_id', $id)->exists();
+
+            $response = [
+                'is_basket' => $basket,
+                'is_save' => $save,
+            ];
+        }
 
         return $this->success(data: $response);
     }
 
+    // App/Http/Controllers/Api/V1/ProductController.php
+
     public function is_already(IsAlreadyRequest $request, $id): JsonResponse
     {
-        $data = [
-            'product_id' => $id,
-        ];
-        if ($request->has('color_id') and $request->get('color_id') != null) {
-            $data['color_id'] = $request->get('color_id');
-        }
-        if ($request->has('size_id') and $request->get('size_id') != null) {
-            $data['size_id'] = $request->get('size_id');
-        }
-        $product = ProductOption::query()->where($data);
-        if ($product->count() > 1) {
-            return $this->success(__('Maxsulot topildi'), [
-                'count' => (int) $product->sum('count'),
+        $sizeName = $request->filled('size_id')
+            ? \DB::table('sizes')->where('id', $request->integer('size_id'))->value('name')
+            : trim((string) $request->query('size', ''));
+
+        $colorName = $request->filled('color_id')
+            ? \DB::table('colors')->where('id', $request->integer('color_id'))->value('name')
+            : trim((string) $request->query('color', ''));
+
+        $q = \DB::table('variants')->where('product_id', (int) $id);
+
+        // MySQL JSON filter
+        if ($sizeName !== '')
+            $q->whereRaw("JSON_EXTRACT(attrs, '$.Size') = ?", [$sizeName]);
+        if ($colorName !== '')
+            $q->whereRaw("JSON_EXTRACT(attrs, '$.Color') = ?", [$colorName]);
+
+        $count = (int) $q->sum('stock');
+
+        // ✅ DOBAVIT' LOGGING (optional)
+        if ($count <= 0) {
+            \Log::info('Product not available', [
+                'product_id' => $id,
+                'size' => $sizeName,
+                'color' => $colorName,
             ]);
-        } else {
-            return $this->error(__('Maxsulot mavjud emas'));
         }
+
+        return $count > 0
+            ? $this->success(__('Maxsulot topildi'), ['count' => $count])
+            : $this->error(__('Maxsulot mavjud emas'));
     }
 }

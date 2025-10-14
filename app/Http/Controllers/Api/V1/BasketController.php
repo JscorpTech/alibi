@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\BasketRequest;
-use App\Http\Requests\Api\LikeRequest;
 use App\Http\Resources\Api\BasketResource;
 use App\Models\Basket;
 use Illuminate\Http\JsonResponse;
@@ -17,34 +16,31 @@ class BasketController extends Controller
     use BaseController;
 
     /**
-     * Set product to basket or remove
-     *
-     * @param LikeRequest $request
-     * @return JsonResponse
-     * @response array{success:true}
+     * Добавить/увеличить товар в корзину по variant_id
      */
     public function index(BasketRequest $request): JsonResponse
     {
         try {
-            $product_id = $request->input('product_id');
-            $color = $request->input('color_id');
-            $size = $request->input('size_id');
-            $count = $request->input('count');
+            $userId = Auth::id();
+            $productId = (int) $request->input('product_id');
+            $variantId = (int) $request->input('variant_id');
+            $count = (int) $request->input('count');
 
-            $check = Auth::user()->baskets()->where([
-                'product_id' => $product_id,
-                'color_id'   => $color,
-                'size_id'    => $size,
-            ]);
-            if ($check->exists()) {
-                $check->first()->update(['count' => $check->first()->count + $count]);
+            // ищем такую же позицию (product_id + variant_id)
+            $row = Basket::query()
+                ->where('user_id', $userId)
+                ->where('product_id', $productId)
+                ->where('variant_id', $variantId)
+                ->first();
+
+            if ($row) {
+                $row->increment('count', $count);
             } else {
                 Basket::query()->create([
-                    'product_id' => $product_id,
-                    'user_id'    => Auth::id(),
-                    'color_id'   => $color,
-                    'size_id'    => $size,
-                    'count'      => $count,
+                    'user_id' => $userId,
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                    'count' => $count,
                 ]);
             }
 
@@ -54,58 +50,66 @@ class BasketController extends Controller
         }
     }
 
+    /**
+     * Изменить количество конкретной записи корзины
+     */
     public function editCount(Request $request, $id): JsonResponse
     {
         $request->validate([
-            'count' => 'required|integer',
+            'count' => ['required', 'integer', 'min:1'],
         ]);
 
-        $basket = Basket::findOrField($id);
-        $basket->count = $request->input('count');
-        $basket->save();
+        $basket = Basket::where('user_id', Auth::id())->findOrField($id);
+        $basket->update(['count' => (int) $request->input('count')]);
 
         return $this->success(__('updated'));
     }
 
     /**
-     * Get the products in the basket
-     *
-     * @return JsonResponse
-     * @response ProductResource
+     * Получить корзину пользователя + агрегаты
      */
     public function get(): JsonResponse
     {
-        $basket = Auth::user()->baskets()->orderByDesc('id')->get();
+        // желательно подгружать product/variant, чтобы ресурс не делал N+1
+        $basket = Auth::user()
+            ->baskets()
+            ->with([
+                'product:id,name_ru,price,discount,image,gallery,is_active',
+                'variant:id,product_id,sku,barcode,price,stock,attrs',
+            ])
+            ->orderByDesc('id')
+            ->get();
 
-        $price = 0;
-        $discount = 0;
+        // считаем суммы с учётом приоритета цены варианта
+        $original = 0;
+        $discounted = 0;
+
         foreach ($basket as $item) {
-            $price = $price + $item->getTotalPrice();
-            $discount = $discount + $item->getProductDiscountPrice();
+            $line = $item->getLineTotals(); // см. ниже в модели Basket
+            $original += $line['original'];
+            $discounted += $line['discounted'];
         }
 
         return $this->success(data: [
-            'items'          => BasketResource::collection($basket),
-            'price'          => ($discount != 0 and $discount != null) ? $discount : $price,
-            'total_discount' => $discount,
-            'discount'       => ($discount != 0 and $discount != null) ? $price - $discount : 0,
-            'orginal_price'  => $price,
-            'count'          => $basket->count(),
+            'items' => BasketResource::collection($basket),
+            'price' => $discounted ?: $original,   // текущая цена (со скидкой, если есть)
+            'total_discount' => $discounted,                // можно трактовать как "сумма со скидкой"
+            'discount' => $discounted ? ($original - $discounted) : 0,
+            'orginal_price' => $original,
+            'count' => $basket->count(),
         ]);
     }
 
     /**
-     * Remove the product in the basket
-     *
-     * @param $id
-     * @return JsonResponse
-     * @response array{success:true}
+     * Удалить позицию из корзины
      */
     public function remove($id): JsonResponse
     {
         try {
-            $res = Basket::query()->where(['user_id' => Auth::id(), 'id' => $id]);
-            $res->delete();
+            Basket::query()
+                ->where('user_id', Auth::id())
+                ->where('id', $id)
+                ->delete();
 
             return $this->success(__('product.basket:delete'));
         } catch (\Throwable $e) {
@@ -114,16 +118,11 @@ class BasketController extends Controller
     }
 
     /**
-     * Clear all basket items
-     *
-     * @return JsonResponse
-     * @response array{success:true,message:string}
+     * Очистить корзину
      */
     public function clear(): JsonResponse
     {
-        $user = Auth::user();
-        $user->baskets()->delete();
-
+        Auth::user()->baskets()->delete();
         return $this->success(__('product.basket:clear'));
     }
 }

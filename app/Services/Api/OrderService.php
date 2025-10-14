@@ -3,79 +3,141 @@
 namespace App\Services\Api;
 
 use App\Enums\OrderStatusEnum;
-use App\Http\Helpers\Helper;
 use App\Models\Address;
 use App\Models\Basket;
 use App\Models\OrderGroup;
+use App\Models\Variant;
 use App\Services\UserService;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class OrderService extends UserService
 {
     /**
-     * Create Order service function
+     * Создание заказа (только variant_id)
      *
      * @throws Exception
      */
     public function create($request): void
     {
-        $cashback = $request->input('cashback', 0);
-        $delivery_date = $request->input('delivery_date', null);
+        $cashback = (int) $request->input('cashback', 0);
+        $deliveryRaw = $request->input('delivery_date');
+        $delivery = $deliveryRaw ? Carbon::parse($deliveryRaw) : null;
 
-        $delivery_date = $delivery_date == null ? $delivery_date : Carbon::parse($delivery_date);
-
-        if (Auth::user()->balance < $cashback) {
+        if ((int) Auth::user()->balance < $cashback) {
             throw new Exception(__('Cashback yetarli emas'));
         }
 
-        $address = Address::query()->create([
-            'long'        => $request->input('address:long'),
-            'lat'         => $request->input('address:lat'),
-            'label'       => $request->input('address:label'),
-            'region_id'   => $request->input('address:region', null),
-            'district_id' => $request->input('address:district', null),
-        ]); // Create address
+        DB::transaction(function () use ($request, $cashback, $delivery) {
 
-        $order_group = OrderGroup::query()->create([
-            'user_id'       => Auth::id(),
-            'address_id'    => $address->id,
-            'payment_type'  => $request->input('payment_type'),
-            'cashback'      => $cashback,
-            'delivery_date' => $delivery_date,
-        ]);
+            $address = Address::query()->create([
+                'long' => $request->input('address:long'),
+                'lat' => $request->input('address:lat'),
+                'label' => $request->input('address:label'),
+                'region_id' => $request->input('address:region'),
+                'district_id' => $request->input('address:district'),
+            ]);
 
-        $basket = $request->input('basket');
+            $orderGroup = OrderGroup::query()->create([
+                'user_id' => Auth::id(),
+                'address_id' => $address->id,
+                'payment_type' => $request->input('payment_type'),
+                'cashback' => $cashback,
+                'delivery_date' => $delivery,
+                'source' => 'app',
+                'type' => 'sale',
+            ]);
 
-        foreach ($basket as $item) {
-            $group = Basket::query()->where('id', $item)->first();
-            $product = $group->product;
-            $count = $group->count; // Get order product count
+            $basketIds = (array) $request->input('basket', []);
+            if (empty($basketIds)) {
+                throw new Exception(__('Savatcha bo‘sh'));
+            }
 
-            $price = Helper::clearSpace($product->getPriceNumber()); // clear price for spaces
+            $rows = Basket::query()
+                ->with('product:id,price')
+                ->whereIn('id', $basketIds)
+                ->get();
 
-            $response = $this->getProductPrice($price);
+            if ($rows->isEmpty()) {
+                throw new Exception(__('Savatcha bo‘sh'));
+            }
 
-            $price = $response->price;
-            $discount = $response->discount;
+            // ⭐ аккумулируем сумму чека
+            $groupTotal = 0;
 
-            $order_group->orders()->create([
-                'product_id' => $product->id,
-                'count'      => $count,
-                'color_id'   => $group->color_id,
-                'size_id'    => $group->size_id,
+            $grouped = $rows->groupBy('variant_id')->map(function ($items) {
+                /** @var Basket $first */
+                $first = $items->first();
+                return [
+                    'row' => $first,
+                    'count_sum' => (int) $items->sum('count'),
+                    'ids' => $items->pluck('id')->all(),
+                ];
+            });
 
-                'status'   => OrderStatusEnum::PENDING,
-                'price'    => $price,
-                'discount' => $discount,
-            ]); // Create Order
+            foreach ($grouped as $variantId => $pack) {
+                /** @var Basket $row */
+                $row = $pack['row'];
+                $count = $pack['count_sum'];
 
-            /**
-             * Delete basket products
-             *
-             */
-            $group->delete();
-        }
+                if (empty($variantId)) {
+                    throw new Exception(__('Variant tanlanmagan'));
+                }
+
+                /** @var Variant|null $variant */
+                $variant = Variant::query()
+                    ->where('id', $variantId)
+                    ->where('product_id', $row->product_id)
+                    ->first();
+
+                if (!$variant) {
+                    throw new Exception(__('Variant topilmadi'));
+                }
+
+                if ($count <= 0) {
+                    Basket::query()->whereIn('id', $pack['ids'])->delete();
+                    continue;
+                }
+
+                $productPrice = (int) ($row->product?->price ?? 0);
+                $finalPrice = (int) ($variant->price ?? 0);
+                if ($finalPrice <= 0) {
+                    $finalPrice = $productPrice;
+                }
+                $discount = 0;
+
+                // списываем остаток
+                $affected = Variant::query()
+                    ->where('id', $variant->id)
+                    ->where('stock', '>=', $count)
+                    ->decrement('stock', $count);
+
+                if ($affected === 0) {
+                    throw new Exception(__('Mahsulot yetarli emas'));
+                }
+
+                $orderGroup->orders()->create([
+                    'product_id' => $row->product_id,
+                    'variant_id' => $variant->id,
+                    'count' => $count,
+                    'status' => OrderStatusEnum::PENDING,
+                    'price' => $finalPrice,
+                    'discount' => $discount,
+                ]);
+
+                // ⭐ плюсуем строку в итог (цена минус скидка * количество)
+                $groupTotal += max(0, (int) $finalPrice - (int) $discount) * (int) $count;
+
+                // чистим строки корзины
+                Basket::query()->whereIn('id', $pack['ids'])->delete();
+            }
+
+            // ⭐ после цикла сохраняем total в группе
+            $orderGroup->update([
+                'total' => (int) $groupTotal,
+            ]);
+        });
     }
 }

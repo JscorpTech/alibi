@@ -3,110 +3,155 @@
 namespace App\Http\Resources\Api\Product;
 
 use App\Http\Resources\Api\BrandResource;
-use App\Http\Resources\Api\ColorResource;
-use App\Http\Resources\Api\ImageResource;
-use App\Http\Resources\Api\Option\ColorOptionResource;
-use App\Http\Resources\Api\Option\OptionResource;
-use App\Http\Resources\Api\SizeResource;
 use App\Http\Resources\BaseResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use App\Http\Resources\Api\TagResource;
 
 class ProductResource extends JsonResource
 {
     use BaseResource;
 
+    /* ---------- helpers ---------- */
+
+    private function urlize(?string $path): ?string
+    {
+        if (!$path)
+            return null;
+        if (Str::startsWith($path, ['http://', 'https://']))
+            return $path;
+        return Storage::url($path);
+    }
+
+    private function toArraySafe($val): array
+    {
+        if (is_array($val))
+            return $val;
+        if (is_object($val))
+            return (array) $val;
+        if (!is_string($val) || $val === '')
+            return [];
+        try {
+            $arr = json_decode($val, true, flags: JSON_THROW_ON_ERROR);
+            return is_array($arr) ? $arr : [];
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
     public function toArray(Request $request): array
     {
-        // 1) image (cover)
-        $imageUrl = $this->image ? Storage::url($this->image) : null;
+        /* 1) cover */
+        $imageUrl = $this->urlize($this->image ?? null);
 
-        // 2) gallery (JSON на продукте) -> массив строк (URL)
-        $gallery = [];
-        foreach ((array) ($this->gallery ?? []) as $u) {
-            // если у тебя в gallery уже полные URL — Storage::url не нужен
-            $gallery[] = is_string($u) ? $u : (string) $u;
-        }
-
-        // 3) colorImages (JSON: map Color => string|array) -> нормализуем в массивы
-        $colorImages = [];
-        foreach ((array) ($this->color_images ?? []) as $color => $val) {
-            if (is_string($val)) {
-                $colorImages[$color] = [$val];
-            } else {
-                $colorImages[$color] = array_values(array_map(
-                    fn($x) => is_string($x) ? $x : (string) $x,
-                    (array) $val
-                ));
+        /* 2) gallery → абсолютные URL */
+        $gallery = $this->toArraySafe($this->gallery ?? null);
+        if (empty($gallery) && Schema::hasTable('product_images')) {
+            $imgCol = Schema::hasColumn('product_images', 'url')
+                ? 'url'
+                : (Schema::hasColumn('product_images', 'path') ? 'path' : null);
+            if ($imgCol) {
+                $gallery = DB::table('product_images')
+                    ->where('product_id', $this->id)
+                    ->when(Schema::hasColumn('product_images', 'position'), fn($q) => $q->orderBy('position'))
+                    ->pluck($imgCol)->filter()->values()->all();
             }
         }
+        if (empty($gallery) && !empty($this->image)) {
+            $gallery = [(string) $this->image];
+        }
+        $gallery = array_map(fn($u) => $this->urlize(is_string($u) ? $u : (string) $u), $gallery);
+        $cover = $gallery[0] ?? $imageUrl;
 
-        // 4) options: берём из JSON поля products.options; если пусто — соберём из твоей БД-логики
-        $options = $this->options ?? [];
-        if (empty($options)) {
-            // Попробуем собрать твоим методом buildVariantState()
-            if (method_exists($this->resource, 'buildVariantState')) {
-                $state = $this->resource->buildVariantState();
-                $options = $state['variant_options'] ?? [];
-            } else {
-                // или из отношений options/items, если есть
-                if ($this->relationLoaded('options')) {
-                    $opt = [];
-                    foreach ($this->options as $o) {
-                        $vals = $o->items->pluck('name')->filter()->unique()->values()->all();
-                        if ($vals)
-                            $opt[] = ['name' => $o->name, 'values' => $vals];
+        /* 3) colorImages → нормализуем + абсолютные URL, с fallback на legacy-таблицы */
+        $colorImages = [];
+        foreach ($this->toArraySafe($this->color_images ?? null) as $color => $val) {
+            $arr = is_string($val) ? [$val] : array_values((array) $val);
+            $colorImages[$color] = array_map(fn($x) => $this->urlize(is_string($x) ? $x : (string) $x), $arr);
+        }
+        if (empty($colorImages) && Schema::hasTable('product_colors') && Schema::hasTable('colors')) {
+            $map = DB::table('product_colors as pc')
+                ->join('colors as c', 'c.id', '=', 'pc.color_id')
+                ->where('pc.product_id', $this->id)
+                ->pluck('pc.id', 'c.name');
+            if ($map && Schema::hasTable('product_color_images')) {
+                foreach ($map as $colorName => $pcId) {
+                    $paths = DB::table('product_color_images')
+                        ->where('product_color_id', $pcId)
+                        ->when(Schema::hasColumn('product_color_images', 'position'), fn($q) => $q->orderBy('position'))
+                        ->pluck('path')->filter()->values()->all();
+                    if ($paths) {
+                        $colorImages[$colorName] = array_map(fn($p) => $this->urlize($p), $paths);
                     }
-                    $options = $opt;
                 }
             }
         }
 
-        // 5) variants: без картинок! только attrs, sku, stock, price...
+        /* 4) variants: БЕЗ image; price fallback на product.price */
         $variants = [];
+        $productPrice = (int) ($this->price ?? 0);
         if ($this->relationLoaded('variants')) {
-            $variants = $this->variants->map(function ($v) {
+            $variants = $this->variants->map(function ($v) use ($productPrice) {
+                $price = (int) ($v->price ?? 0);
+                if ($price <= 0)
+                    $price = $productPrice;
                 return [
                     'id' => $v->id,
                     'sku' => $v->sku,
                     'barcode' => $v->barcode,
-                    'price' => (int) $v->price,
-                    'stock' => (int) $v->stock,
                     'attrs' => (array) $v->attrs, // {"Color":"Black","Size":"41"}
+                    'price' => $price,
+                    'stock' => (int) ($v->stock ?? 0),
                 ];
             })->values()->all();
         }
 
-        // 6) Базовый ответ в нашей целевой схеме
-        $data = [
+        /* 5) options: JSON products.options → иначе собираем из variants.attrs */
+        $options = $this->options ?? [];
+        if (empty($options) && $this->relationLoaded('variants') && $this->variants->isNotEmpty()) {
+            $map = [];
+            foreach ($this->variants as $v) {
+                foreach ((array) $v->attrs as $name => $val) {
+                    $name = (string) $name;
+                    $val = (string) $val;
+                    $map[$name] = $map[$name] ?? [];
+                    if (!in_array($val, $map[$name], true))
+                        $map[$name][] = $val;
+                }
+            }
+            $options = [];
+            foreach ($map as $name => $values) {
+                $options[] = ['name' => $name, 'values' => array_values($values)];
+            }
+        }
+
+        /* 6) totalStock */
+        $totalStock = 0;
+        foreach ($variants as $v)
+            $totalStock += (int) ($v['stock'] ?? 0);
+
+        /* 7) Итог — ЧИСТЫЙ Product v1 без legacy */
+        return [
             'id' => $this->id,
-            'name' => $this->name,                 // или $this->name_ru, если нужно
-            'description' => $this->desc ?? null,
-            'gender' => $this->gender,
-            'label' => $this->label,
+            'name' => (string) ($this->name ?? $this->name_ru ?? ''),
+            'description' => $this->desc ?? $this->desc_ru ?? null,
             'price' => (int) $this->price,
-            'discount' => (int) $this->getDiscountNumber(),
-            'image' => $imageUrl,
+            'image' => $cover,
             'gallery' => $gallery,
             'options' => $options,
             'colorImages' => $colorImages,
             'variants' => $variants,
-            // остальное можно оставить (на время) — совместимость с фронтом/админкой
-            'tags' => TagResource::collection($this->whenLoaded('tags', $this->tags)),
-            'brand' => BrandResource::make($this->whenLoaded('brand', $this->brand)),
-            'views' => $this->views,
+            'totalStock' => (int) $totalStock,
+            'active' => (bool) ($this->is_active ?? true),
+
+            // мета
+            'tags' => $this->relationLoaded('tags') ? TagResource::collection($this->tags) : [],
+            'brand' => $this->brand ? BrandResource::make($this->brand) : null,
+            'views' => (int) $this->views,
         ];
-
-        // ====== Наследие (если фронт ещё ждёт эти поля; можно удалить позже) ======
-        // ВНИМАНИЕ: они не относятся к Product v1, оставляем лишь для обратной совместимости
-        $data['colors'] = ColorOptionResource::collection($this->whenLoaded('options', $this->options));
-        $data['colors2'] = ColorResource::collection($this->whenLoaded('colors', $this->colors));
-        $data['sizes'] = SizeResource::collection($this->whenLoaded('sizes', $this->sizes));
-        $data['images'] = ImageResource::collection($this->whenLoaded('images', $this->images));
-        $data['options_legacy'] = OptionResource::collection($this->whenLoaded('product_options', $this->product_options));
-
-        return $data;
     }
 }

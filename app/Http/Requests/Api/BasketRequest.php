@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Api;
 
-use App\Enums\PaymentTypeEnum;
 use App\Http\Requests\BaseRequest;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class BasketRequest extends FormRequest
 {
@@ -18,10 +18,14 @@ class BasketRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => ['required', 'exists:products,id'],
-            'count'      => ['required','integer', 'min:1', 'max:100'],
-            'color_id'   => ['required', 'exists:colors,id'],
-            'size_id'    => ['required', 'exists:sizes,id'],
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'variant_id' => [
+                'required',
+                'integer',
+                Rule::exists('variants', 'id')
+                    ->where(fn($q) => $q->where('product_id', $this->input('product_id')))
+            ],
+            'count' => ['required', 'integer', 'min:1'],
         ];
     }
 }
