@@ -6,12 +6,19 @@ use App\Enums\OrderStatusEnum;
 use App\Models\Order;
 use App\Models\OrderGroup;
 use App\Models\Variant;
+use App\Services\Inventory\StockService;  // ⭐ НОВОЕ
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class OrderWriter
 {
+    // ⭐ ДОБАВИТЬ КОНСТРУКТОР
+    public function __construct(
+        private StockService $stockService
+    ) {
+    }
+
     public function create(array $payload): OrderGroup
     {
         return DB::transaction(function () use ($payload) {
@@ -25,26 +32,7 @@ class OrderWriter
 
             // ✅ ЗАЩИТА: Нельзя делать возврат по возвратному чеку!
             if ($type === 'return' && !empty($payload['original_group_id'])) {
-                $original = OrderGroup::find((int) $payload['original_group_id']);
-
-                if ($original && $original->type === 'return') {
-                    Log::warning('❌ Попытка возврата по возвратному чеку', [
-                        'original_group_id' => $original->id,
-                        'original_type' => $original->type,
-                        'original_original_group_id' => $original->original_group_id,
-                    ]);
-
-                    throw new \RuntimeException(
-                        "Нельзя делать возврат по возвратному чеку! " .
-                        "Используйте оригинальный чек продажи #" .
-                        ($original->original_group_id ?? $original->id)
-                    );
-                }
-
-                Log::info('✅ Начало возврата', [
-                    'original_group_id' => $payload['original_group_id'],
-                    'original_type' => $original->type ?? 'unknown',
-                ]);
+                $this->validateReturnGroup($payload['original_group_id']);
             }
 
             $group = OrderGroup::create([
@@ -76,57 +64,11 @@ class OrderWriter
 
                 // ✅ ПРОВЕРКА: Нельзя вернуть больше, чем было продано
                 if (!empty($ret['original_order_id'])) {
-                    $originalOrder = Order::where('id', (int) $ret['original_order_id'])
-                        ->lockForUpdate()
-                        ->first();
-
-                    if ($originalOrder) {
-                        $soldQty = (int) $originalOrder->count;
-
-                        // Сколько уже возвращено по этой позиции
-                        $returnedQty = (int) Order::where('original_order_id', $originalOrder->id)
-                            ->sum('count');
-
-                        $remaining = max(0, $soldQty - $returnedQty);
-
-                        Log::info("📦 Проверка возврата позиции #{$index}", [
-                            'original_order_id' => $originalOrder->id,
-                            'product_id' => $productId,
-                            'variant_id' => $variantId,
-                            'продано_изначально' => $soldQty,
-                            'уже_возвращено' => $returnedQty,
-                            'осталось_можно_вернуть' => $remaining,
-                            'пытается_вернуть_сейчас' => $count,
-                        ]);
-
-                        if ($remaining <= 0) {
-                            Log::error('❌ Все товары уже возвращены', [
-                                'original_order_id' => $originalOrder->id,
-                                'sold' => $soldQty,
-                                'returned' => $returnedQty,
-                            ]);
-
-                            throw new \RuntimeException(
-                                "По позиции #{$originalOrder->id} (товар ID:{$productId}) уже всё возвращено! " .
-                                "Продано было: {$soldQty} шт, возвращено: {$returnedQty} шт."
-                            );
-                        }
-
-                        if ($count > $remaining) {
-                            Log::error('❌ Попытка вернуть больше чем осталось', [
-                                'original_order_id' => $originalOrder->id,
-                                'remaining' => $remaining,
-                                'trying_to_return' => $count,
-                            ]);
-
-                            throw new \RuntimeException(
-                                "Нельзя вернуть {$count} шт по позиции #{$originalOrder->id}. " .
-                                "Осталось доступно для возврата: {$remaining} шт " .
-                                "(продано: {$soldQty}, уже возвращено: {$returnedQty})."
-                            );
-                        }
-                    }
+                    $this->validateReturnQuantity($ret['original_order_id'], $count, $index);
                 }
+
+                // Получаем данные варианта для снимка
+                $variant = Variant::with('product')->find($variantId);
 
                 Order::create([
                     'order_group_id' => $group->id,
@@ -139,9 +81,18 @@ class OrderWriter
                     'discount' => $discount,
                     'count' => $count,
                     'original_order_id' => $ret['original_order_id'] ?? null,
+                    'product_name' => $variant?->product?->name,  // ⭐ НОВОЕ
+                    'variant_sku' => $variant?->sku,              // ⭐ НОВОЕ
                 ]);
 
-                $this->increaseVariantStock($variantId, $count);
+                // ⭐ ЗАМЕНЕНО: вместо increaseVariantStock используем StockService
+                $this->stockService->increase(
+                    variantId: $variantId,
+                    qty: $count,
+                    reason: 'return',
+                    source: $source,
+                    orderGroupId: $group->id
+                );
 
                 $total -= max(0, $price - $discount) * $count;
             }
@@ -159,6 +110,9 @@ class OrderWriter
                     throw new \InvalidArgumentException('Variant ID is required for sale line');
                 }
 
+                // Получаем данные варианта для снимка
+                $variant = Variant::with('product')->find($variantId);
+
                 Order::create([
                     'order_group_id' => $group->id,
                     'user_id' => $payload['user_id'] ?? null,
@@ -169,9 +123,17 @@ class OrderWriter
                     'price' => $price,
                     'discount' => $discount,
                     'count' => $count,
+                    'product_name' => $variant?->product?->name,  // ⭐ НОВОЕ
+                    'variant_sku' => $variant?->sku,              // ⭐ НОВОЕ
                 ]);
 
-                $this->decreaseVariantStock($variantId, $count);
+                // ⭐ ЗАМЕНЕНО: вместо decreaseVariantStock используем StockService
+                $this->stockService->deduct(
+                    variantId: $variantId,
+                    qty: $count,
+                    source: $source,
+                    orderGroupId: $group->id
+                );
 
                 $total += max(0, $price - $discount) * $count;
             }
@@ -184,7 +146,7 @@ class OrderWriter
             ]);
 
             if ($type === 'return') {
-                Log::info('✅ Возврат завершен', [
+                Log::info('✅ Возврат завершен через StockService', [
                     'return_group_id' => $group->id,
                     'order_number' => $group->order_number,
                     'total' => $group->total,
@@ -195,23 +157,128 @@ class OrderWriter
         });
     }
 
-    // --- ONLY variants.stock from here ---
+    // ========================================
+    // ⭐ НОВЫЕ МЕТОДЫ (вынесены из create)
+    // ========================================
 
-    private function increaseVariantStock(int $variantId, int $qty): void
+    /**
+     * Проверить что не возвращаем по возвратному чеку
+     */
+    private function validateReturnGroup(int $originalGroupId): void
     {
-        Variant::where('id', $variantId)
-            ->lockForUpdate()
-            ->update(['stock' => DB::raw('COALESCE(stock,0) + ' . (int) $qty)]);
+        $original = OrderGroup::find($originalGroupId);
 
-        Log::info('📈 Возврат на склад', [
-            'variant_id' => $variantId,
-            'qty' => $qty,
+        if ($original && $original->type === 'return') {
+            Log::warning('❌ Попытка возврата по возвратному чеку', [
+                'original_group_id' => $original->id,
+                'original_type' => $original->type,
+                'original_original_group_id' => $original->original_group_id,
+            ]);
+
+            throw new \RuntimeException(
+                "Нельзя делать возврат по возвратному чеку! " .
+                "Используйте оригинальный чек продажи #" .
+                ($original->original_group_id ?? $original->id)
+            );
+        }
+
+        Log::info('✅ Начало возврата', [
+            'original_group_id' => $originalGroupId,
+            'original_type' => $original?->type ?? 'unknown',
         ]);
     }
 
+    /**
+     * Проверить что не возвращаем больше чем продали
+     */
+    private function validateReturnQuantity(int $originalOrderId, int $count, int $index): void
+    {
+        $originalOrder = Order::where('id', $originalOrderId)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$originalOrder) {
+            throw new \RuntimeException("Оригинальный заказ #{$originalOrderId} не найден");
+        }
+
+        $soldQty = (int) $originalOrder->count;
+
+        // Сколько уже возвращено по этой позиции
+        $returnedQty = (int) Order::where('original_order_id', $originalOrder->id)
+            ->sum('count');
+
+        $remaining = max(0, $soldQty - $returnedQty);
+
+        Log::info("📦 Проверка возврата позиции #{$index}", [
+            'original_order_id' => $originalOrder->id,
+            'product_id' => $originalOrder->product_id,
+            'variant_id' => $originalOrder->variant_id,
+            'продано_изначально' => $soldQty,
+            'уже_возвращено' => $returnedQty,
+            'осталось_можно_вернуть' => $remaining,
+            'пытается_вернуть_сейчас' => $count,
+        ]);
+
+        if ($remaining <= 0) {
+            Log::error('❌ Все товары уже возвращены', [
+                'original_order_id' => $originalOrder->id,
+                'sold' => $soldQty,
+                'returned' => $returnedQty,
+            ]);
+
+            throw new \RuntimeException(
+                "По позиции #{$originalOrder->id} (товар ID:{$originalOrder->product_id}) уже всё возвращено! " .
+                "Продано было: {$soldQty} шт, возвращено: {$returnedQty} шт."
+            );
+        }
+
+        if ($count > $remaining) {
+            Log::error('❌ Попытка вернуть больше чем осталось', [
+                'original_order_id' => $originalOrder->id,
+                'remaining' => $remaining,
+                'trying_to_return' => $count,
+            ]);
+
+            throw new \RuntimeException(
+                "Нельзя вернуть {$count} шт по позиции #{$originalOrder->id}. " .
+                "Осталось доступно для возврата: {$remaining} шт " .
+                "(продано: {$soldQty}, уже возвращено: {$returnedQty})."
+            );
+        }
+    }
+
+    // ========================================
+    // ⚠️ DEPRECATED: Старые методы (НЕ ИСПОЛЬЗУЮТСЯ)
+    // Оставлены для обратной совместимости
+    // ========================================
+
+    /**
+     * @deprecated Используй StockService::increase() вместо этого
+     */
+    private function increaseVariantStock(int $variantId, int $qty): void
+    {
+        Log::warning('⚠️ Используется deprecated метод increaseVariantStock', [
+            'variant_id' => $variantId,
+            'qty' => $qty,
+            'trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2),
+        ]);
+
+        Variant::where('id', $variantId)
+            ->lockForUpdate()
+            ->update(['stock' => DB::raw('COALESCE(stock,0) + ' . (int) $qty)]);
+    }
+
+    /**
+     * @deprecated Используй StockService::deduct() вместо этого
+     */
     private function decreaseVariantStock(int $variantId, int $qty): void
     {
-        // безопасное списание: только если хватает
+        Log::warning('⚠️ Используется deprecated метод decreaseVariantStock', [
+            'variant_id' => $variantId,
+            'qty' => $qty,
+            'trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2),
+        ]);
+
         $affected = Variant::where('id', $variantId)
             ->where('stock', '>=', $qty)
             ->lockForUpdate()

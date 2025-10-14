@@ -1,145 +1,123 @@
 <?php
-/**
- * File: app/Observers/OrderGroupObserver.php
- *
- * ЗА ЧТО ОТВЕЧАЕТ ЭТОТ OBSERVER
- * --------------------------------
- * Этот класс слушает события Eloquent-модели OrderGroup и выполняет побочные
- * действия при создании/изменении заказа:
- *
- * 1) created:
- *    - снимает флаг "первый заказ" у пользователя;
- *    - если пользователь применил кэшбэк — уменьшает его баланс;
- *    - отправляет Telegram-уведомление для заказов из приложения (source != 'pos').
- *    - ВАЖНО: сейчас в created НЕ трогаем остатки склада (stock).
- *
- * 2) updated (когда меняется статус):
- *    - ДЛЯ APP (source != 'pos'): возвращает stock при отмене (CANCELED);
- *    - На SUCCESS: если пустые, проставляет paid_at и total, начисляет given_cashback
- *      и увеличивает баланс пользователя;
- *    - На CANCELED: откатывает ранее выданный given_cashback.
- *
- * 3) adjustStock():
- *    - Служебная функция, которая умеет безопасно инкрементить/декрементить
- *      stock у variants по позициям заказа.
- *
- * С ЧЕМ ЭТО РАБОТАЕТ
- * -------------------
- * - Модель: App\Models\OrderGroup (+ связи user, address, orders)
- * - Модель: App\Models\Variant (поле stock)
- * - Сервисы:
- *     * App\Services\Admin\OrderService::first_order_sync() — синхронизация признака первого заказа.
- *     * App\Services\UserService::getCashback() — ставка кэшбэка.
- *     * App\Services\BotService — отправка уведомлений в Telegram.
- *
- * ГДЕ СЕЙЧАС МЕНЯЕТСЯ STOCK
- * --------------------------
- * - Для APP: списание делается в сервисе создания заказа (OrderService::create),
- *            а ВОЗВРАТ при отмене делаем здесь, в updated().
- * - Для POS: списание/возврат управляется POS-сервисами (например, OrderWriter),
- *            а в этом observer мы POS-остатки НЕ трогаем (см. условие $source !== 'pos').
- *
- * ПРИМЕЧАНИЕ
- * ----------
- * Если захотим централизовать движение остатков «по статусам», можно перенести
- * и списание, и возврат целиком сюда (в updated), а из сервисов убрать изменение stock.
- */
-
 
 namespace App\Observers;
 
 use App\Enums\OrderStatusEnum;
 use App\Models\OrderGroup;
-use App\Models\Variant;
 use App\Services\Admin\OrderService;
+use App\Services\Inventory\StockService;  // ⭐ НОВОЕ
 use App\Services\UserService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderGroupObserver
 {
+    // ⭐ ДОБАВИТЬ КОНСТРУКТОР
+    public function __construct(
+        private StockService $stockService
+    ) {
+    }
+
     /**
      * Срабатывает один раз после создания OrderGroup.
-     * Здесь НЕ трогаем остатки, только «мягкие» побочки:
+     * Здесь НЕ трогаем остатки (это делает OrderWriter через StockService),
+     * только «мягкие» побочки:
      *  - снимаем is_first_order у пользователя,
      *  - списываем применённый кэшбэк с баланса,
      *  - отправляем Telegram-уведомление для заказов из приложения.
      */
-
     public function created(OrderGroup $orderGroup): void
     {
         try {
-            $orderGroup->loadMissing(['user', 'address', 'orders']); // ⬅ подгружаем orders тоже
+            $orderGroup->loadMissing(['user', 'address', 'orders']);
 
-            // первый заказ — убираем флаг
+            // Первый заказ — убираем флаг
             if ($orderGroup->user) {
                 $orderGroup->user->update(['is_first_order' => false]);
             }
 
-            // списываем кешбэк у текущего юзера, если он был применён
+            // Списываем кешбэк у текущего юзера, если он был применён
             if (!empty($orderGroup->cashback) && auth()->check()) {
                 $u = auth()->user();
                 $u->balance = max(0, (int) $u->balance - (int) $orderGroup->cashback);
                 $u->save();
             }
 
-            // ⚠️ ЕСЛИ POS сразу создал со статусом success — спишем сток уже сейчас
-            // if (($orderGroup->source ?? null) === 'pos' && $orderGroup->status === OrderStatusEnum::SUCCESS) {
-            //     $this->adjustStock($orderGroup, 'decrement'); // списание
-            //     return; // POS: не шлём сообщение в общий канал
-            // }
+            // ⭐ ВАЖНО: Склад уже изменён в OrderWriter через StockService!
+            // Здесь НЕ трогаем stock
 
             // --- Telegram уведомление только для app-заказов ---
             if (($orderGroup->source ?? null) !== 'pos') {
-                $addressLabel = optional($orderGroup->address)->label ?? 'Без адреса';
-                $payment = $orderGroup->payment_method ?? $orderGroup->payment_type ?? 'Не указан';
-                $url = route('filament.admin.resources.order-groups.view', ['record' => $orderGroup->id]);
-
-                app(\App\Services\BotService::class)->sendMessage(
-                    env('ADMIN_CHAT_ID'),
-                    __(
-                        "Yangi buyurtma: 💵\n\nBuyurtma: <a href=':order'>#:order_id</a>\nManzil: :address\nTo'lov turi: :payment_type",
-                        ['order' => $url, 'order_id' => $orderGroup->id, 'address' => $addressLabel, 'payment_type' => $payment]
-                    )
-                );
+                $this->sendTelegramNotification($orderGroup);
             }
+
+            Log::info('✅ OrderGroupObserver.created выполнен', [
+                'order_group_id' => $orderGroup->id,
+                'order_number' => $orderGroup->order_number,
+                'source' => $orderGroup->source,
+                'type' => $orderGroup->type,
+            ]);
         } catch (\Throwable $e) {
-            \Log::error('OrderGroupObserver.created failed: ' . $e->getMessage(), ['order_group_id' => $orderGroup->id]);
+            Log::error('❌ OrderGroupObserver.created failed', [
+                'order_group_id' => $orderGroup->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
+
     /**
      * Срабатывает ПЕРЕД сохранением, когда изменились поля.
      * Используем, чтобы на уровне статуса подвинуть баланс по применённому кэшбэку,
      * если статус идёт в CANCELED / выходит из CANCELED.
      */
-
     public function updating(OrderGroup $orderGroup): void
     {
-        if ($orderGroup->isDirty('status')) {
-            $status = $orderGroup->status;
-            $oldStatus = $orderGroup->getOriginal('status');
-            $user = $orderGroup->user;
+        if (!$orderGroup->isDirty('status')) {
+            return;
+        }
 
-            if ($status === OrderStatusEnum::CANCELED) {
-                $user->balance += (int) $orderGroup->cashback;
-                $user->save();
-            } elseif ($oldStatus === OrderStatusEnum::CANCELED) {
-                $user->balance -= (int) $orderGroup->cashback;
-                $user->save();
-            }
+        $status = $orderGroup->status;
+        $oldStatus = $orderGroup->getOriginal('status');
+        $user = $orderGroup->user;
+
+        if (!$user) {
+            return;
+        }
+
+        // Возвращаем применённый кэшбэк при отмене
+        if ($status === OrderStatusEnum::CANCELED) {
+            $user->balance += (int) $orderGroup->cashback;
+            $user->save();
+
+            Log::info('💰 Возврат применённого кэшбэка при отмене', [
+                'order_group_id' => $orderGroup->id,
+                'cashback' => $orderGroup->cashback,
+                'user_id' => $user->id,
+                'new_balance' => $user->balance,
+            ]);
+        }
+        // Списываем кэшбэк если статус вышел из CANCELED
+        elseif ($oldStatus === OrderStatusEnum::CANCELED) {
+            $user->balance -= (int) $orderGroup->cashback;
+            $user->save();
+
+            Log::info('💰 Списание кэшбэка при восстановлении заказа', [
+                'order_group_id' => $orderGroup->id,
+                'cashback' => $orderGroup->cashback,
+                'user_id' => $user->id,
+                'new_balance' => $user->balance,
+            ]);
         }
     }
 
     /**
      * Срабатывает ПОСЛЕ сохранения, когда статус реально изменился.
      * Здесь:
-     *  - для APP (source != 'pos') возвращаем stock при отмене,
+     *  - для APP (source != 'pos') возвращаем stock при отмене через StockService,
      *  - на SUCCESS проставляем paid_at/total, считаем/записываем given_cashback и увеличиваем баланс,
      *  - на CANCELED — откатываем ранее выданный given_cashback.
-     *
-     * ВНИМАНИЕ: изменение stock организовано только для APP-отмены.
-     * POS-остатки изменяются в POS-сервисах.
      */
-
     public function updated(OrderGroup $orderGroup): void
     {
         if (!$orderGroup->isDirty('status') || $orderGroup->isDirty('given_cashback')) {
@@ -153,21 +131,27 @@ class OrderGroupObserver
         $source = (string) ($orderGroup->source ?? 'app');
         $user = $orderGroup->user;
 
-        \App\Services\Admin\OrderService::first_order_sync($user);
+        if ($user) {
+            OrderService::first_order_sync($user);
+        }
 
         DB::beginTransaction();
         try {
-            // --- сток ---
+            // ========================================
+            // ⭐ СКЛАД: Возврат товаров при отмене APP заказа
+            // ========================================
             if ($source !== 'pos') {
-                if ($newStatus === \App\Enums\OrderStatusEnum::CANCELED && $oldStatus !== \App\Enums\OrderStatusEnum::CANCELED) {
-                    $this->adjustStock($orderGroup, 'increment');
+                if ($newStatus === OrderStatusEnum::CANCELED && $oldStatus !== OrderStatusEnum::CANCELED) {
+                    $this->returnStockOnCancel($orderGroup);
                 }
             }
 
             $updateGroup = [];
 
-            // --- SUCCESS: проставить paid_at/total, начислить кешбэк ---
-            if ($newStatus === \App\Enums\OrderStatusEnum::SUCCESS) {
+            // ========================================
+            // SUCCESS: проставить paid_at/total, начислить кешбэк
+            // ========================================
+            if ($newStatus === OrderStatusEnum::SUCCESS) {
                 if (empty($orderGroup->paid_at)) {
                     $updateGroup['paid_at'] = now();
                 }
@@ -180,30 +164,54 @@ class OrderGroupObserver
                     $updateGroup['total'] = (int) $sum;
                 }
 
-                $sumForCashback = (int) $orderGroup->orders()->sum('price');
-                $cashback = (int) round(($sumForCashback / 100) * \App\Services\UserService::getCashback($user));
-                $user->balance += $cashback;
+                // Начисляем given_cashback
+                if ($user && $orderGroup->type !== 'return') {
+                    $sumForCashback = (int) $orderGroup->orders()->sum('price');
+                    $cashback = (int) round(($sumForCashback / 100) * UserService::getCashback($user));
 
-                DB::table('order_groups')
-                    ->where('id', $orderGroup->id)
-                    ->update(['given_cashback' => $cashback]);
+                    if ($cashback > 0) {
+                        $user->balance += $cashback;
+                        $user->save();
+
+                        DB::table('order_groups')
+                            ->where('id', $orderGroup->id)
+                            ->update(['given_cashback' => $cashback]);
+
+                        Log::info('💰 Начислен given_cashback', [
+                            'order_group_id' => $orderGroup->id,
+                            'cashback' => $cashback,
+                            'user_id' => $user->id,
+                            'new_balance' => $user->balance,
+                        ]);
+                    }
+                }
             }
 
-            // --- CANCELED: откат кешбэка ---
-            if ($newStatus === \App\Enums\OrderStatusEnum::CANCELED) {
-                $user->balance -= (int) $orderGroup->given_cashback;
-                if ($user->balance < 0)
-                    $user->balance = 0;
+            // ========================================
+            // CANCELED: откат given_cashback
+            // ========================================
+            if ($newStatus === OrderStatusEnum::CANCELED) {
+                if ($user && $orderGroup->given_cashback > 0) {
+                    $user->balance -= (int) $orderGroup->given_cashback;
+                    if ($user->balance < 0) {
+                        $user->balance = 0;
+                    }
+                    $user->save();
 
-                DB::table('order_groups')
-                    ->where('id', $orderGroup->id)
-                    ->update(['given_cashback' => 0]);
+                    DB::table('order_groups')
+                        ->where('id', $orderGroup->id)
+                        ->update(['given_cashback' => 0]);
+
+                    Log::info('💰 Откат given_cashback при отмене', [
+                        'order_group_id' => $orderGroup->id,
+                        'returned_cashback' => $orderGroup->given_cashback,
+                        'user_id' => $user->id,
+                        'new_balance' => $user->balance,
+                    ]);
+                }
             }
 
-            // Сохраняем только пользователя обычным save()
-            $user->save();
-
-            // А для группы — без событий:
+            // Сохраняем изменения в order_groups без событий
             if (!empty($updateGroup)) {
                 DB::table('order_groups')
                     ->where('id', $orderGroup->id)
@@ -211,27 +219,130 @@ class OrderGroupObserver
             }
 
             DB::commit();
+
+            Log::info('✅ OrderGroupObserver.updated выполнен', [
+                'order_group_id' => $orderGroup->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'source' => $source,
+            ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+
+            Log::error('❌ OrderGroupObserver.updated failed', [
+                'order_group_id' => $orderGroup->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             throw $e;
         }
     }
 
+    // ========================================
+    // ⭐ НОВЫЕ ПРИВАТНЫЕ МЕТОДЫ
+    // ========================================
+
     /**
-     * Утилита для безопасного изменения остатков по всем позициям группы.
-     * $op = 'decrement' (списать) или 'increment' (вернуть).
-     * Для списания проверяем, что stock >= qty — иначе кидаем исключение.
+     * Возврат товаров на склад при отмене APP заказа
+     */
+    private function returnStockOnCancel(OrderGroup $orderGroup): void
+    {
+        foreach ($orderGroup->orders as $order) {
+            $variantId = (int) ($order->variant_id ?? 0);
+            $qty = (int) ($order->count ?? 0);
+
+            if ($variantId <= 0 || $qty <= 0) {
+                continue;
+            }
+
+            try {
+                // ⭐ ИСПОЛЬЗУЕМ StockService вместо adjustStock
+                $this->stockService->increase(
+                    variantId: $variantId,
+                    qty: $qty,
+                    reason: 'cancel',
+                    source: $orderGroup->source ?? 'app',
+                    orderGroupId: $orderGroup->id
+                );
+
+                Log::info('📦 Товар возвращён на склад при отмене', [
+                    'order_group_id' => $orderGroup->id,
+                    'order_id' => $order->id,
+                    'variant_id' => $variantId,
+                    'qty' => $qty,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('❌ Ошибка возврата товара на склад', [
+                    'order_group_id' => $orderGroup->id,
+                    'order_id' => $order->id,
+                    'variant_id' => $variantId,
+                    'error' => $e->getMessage(),
+                ]);
+
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * Отправка Telegram уведомления
+     */
+    private function sendTelegramNotification(OrderGroup $orderGroup): void
+    {
+        try {
+            $addressLabel = optional($orderGroup->address)->label ?? 'Без адреса';
+            $payment = $orderGroup->payment_method ?? $orderGroup->payment_type ?? 'Не указан';
+            $url = route('filament.admin.resources.order-groups.view', ['record' => $orderGroup->id]);
+
+            app(\App\Services\BotService::class)->sendMessage(
+                env('ADMIN_CHAT_ID'),
+                __(
+                    "Yangi buyurtma: 💵\n\nBuyurtma: <a href=':order'>#:order_id</a>\nManzil: :address\nTo'lov turi: :payment_type",
+                    [
+                        'order' => $url,
+                        'order_id' => $orderGroup->id,
+                        'address' => $addressLabel,
+                        'payment_type' => $payment
+                    ]
+                )
+            );
+
+            Log::info('📱 Telegram уведомление отправлено', [
+                'order_group_id' => $orderGroup->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('❌ Ошибка отправки Telegram уведомления', [
+                'order_group_id' => $orderGroup->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // ========================================
+    // ⚠️ DEPRECATED: Старый метод (НЕ ИСПОЛЬЗУЕТСЯ)
+    // Оставлен для обратной совместимости
+    // ========================================
+
+    /**
+     * @deprecated Используй StockService вместо этого
      */
     private function adjustStock(OrderGroup $group, string $op): void
     {
+        Log::warning('⚠️ Используется deprecated метод adjustStock', [
+            'order_group_id' => $group->id,
+            'operation' => $op,
+            'trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3),
+        ]);
+
         foreach ($group->orders as $o) {
             $vid = (int) ($o->variant_id ?? 0);
             $qty = (int) ($o->count ?? 0);
-            if ($vid <= 0 || $qty <= 0)
+            if ($vid <= 0 || $qty <= 0) {
                 continue;
+            }
 
             if ($op === 'decrement') {
-                // безопасно уменьшаем, только если хватает остатков; иначе бросаем исключение
                 $affected = DB::table('variants')
                     ->where('id', $vid)
                     ->where('stock', '>=', $qty)
