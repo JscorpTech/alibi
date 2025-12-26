@@ -522,20 +522,13 @@ class Product extends Model
 
     public function getPriceNumber(): int
     {
-        if (Auth::check() && Auth::user()->is_first_order) {
-            return (int) round($this->price - ($this->price / 100 * DiscountEnum::FIRST_ORDER));
-        }
+        // Скидка первого заказа убрана — теперь только баллы
         return (int) round($this->discount ?: $this->price);
     }
 
     public function getDiscountNumber()
     {
-        if (request()->bearerToken() && $user = Auth::guard('sanctum')->user()) {
-            Auth::setUser($user);
-        }
-        if (Auth::check() && Auth::user()->is_first_order) {
-            return (int) round($this->price - ($this->price / 100 * DiscountEnum::FIRST_ORDER));
-        }
+        // Скидка первого заказа убрана — только скидка на товар
         return (int) round($this->discount ?: 0) ?: null;
     }
 

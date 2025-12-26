@@ -13,19 +13,23 @@ class MeResource extends JsonResource
 
     public function toArray(Request $request): array
     {
-        $service = new UserService();
+        $loyalty = UserService::getLoyaltyInfo($this->resource);
 
         return [
             'full_name'      => $this->full_name,
             'phone'          => $this->phone,
-            'is_first_order' => $this->is_first_order ?? false, // is first order
-            'balance'        => number_format($this->balance, 2),
-            'card'           => [
-                'cashback' => UserService::getCashback($this),
-                'name'     => __(UserService::getCard($this)),
+            'balance'        => (int) ($this->balance ?? 0),
+            'level'          => $loyalty['level'],
+            'total_spent'    => $loyalty['total_spent'],
+            'loyalty'        => [
+                'level'       => $loyalty['level'],
+                'rate'        => $loyalty['rate'],
+                'balance'     => $loyalty['balance'],
+                'total_spent' => $loyalty['total_spent'],
+                'next_level'  => $loyalty['next_level'],
+                'remaining'   => $loyalty['remaining'],
             ],
-            'discount'   => $service->getDiscount(),
-            'created_at' => $this->created_at->format('d.m.Y H:i'),
+            'created_at'     => $this->created_at->format('d.m.Y H:i'),
         ];
     }
 }

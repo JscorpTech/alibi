@@ -2,91 +2,164 @@
 
 namespace App\Services;
 
-use App\Enums\CardEnum;
-use App\Enums\CardPriceEnum;
-use App\Enums\CashbackEnum;
-use App\Enums\DiscountEnum;
-use App\Enums\DiscountTypeEnum;
-use App\Enums\OrderStatusEnum;
-use App\Models\Order;
+use App\Enums\LoyaltyLevelEnum;
+use App\Enums\LoyaltyThresholdEnum;
+use App\Enums\LoyaltyRateEnum;
 use Illuminate\Support\Facades\Auth;
 
 class UserService
 {
     /**
-     * Get product price for calculate discount
+     * Get product price - без скидки первого заказа
      *
      * @param $price
      * @return object
      */
     public function getProductPrice($price): object
     {
-        $discount = ($price * ($this->getDiscount()->discount / 100));
-        $price = $price - $discount;
-
+        // Скидок больше нет — возвращаем как есть
         return (object) [
             'price'    => (int) $price,
-            'discount' => $discount,
+            'discount' => 0,
         ];
     }
 
     /**
-     * Get user discount
+     * Get user discount - скидок больше нет
      *
      * @return object
      */
     public function getDiscount(): object
     {
-        $user = Auth::user();
-
-        if ($user->is_first_order) {
-            $discount = DiscountEnum::FIRST_ORDER;
-            $discountType = DiscountTypeEnum::FIRST_ORDER;
-        }
-
         return (object) [
-            'discount' => (int) ($discount ?? 0),
-            'type'     => $discountType ?? null,
+            'discount' => 0,
+            'type'     => null,
         ];
     }
 
     /**
-     * Get Cashback
+     * Get Cashback percent by level
      *
-     * @param $price
+     * @param $user
      * @return int
      */
     public static function getCashback($user = null): int
     {
         $user = $user ?? Auth::user();
-        $card = UserService::getCard($user);
+        
+        if (!$user) {
+            return LoyaltyRateEnum::START;
+        }
 
-        $discount = match ($card) {
-            CardEnum::BLACK    => CashbackEnum::BLACK,
-            CardEnum::PLATINUM => CashbackEnum::PLATINUM,
-            CardEnum::GOLD     => CashbackEnum::GOLD
+        $level = $user->level ?? LoyaltyLevelEnum::START;
+
+        return match ($level) {
+            LoyaltyLevelEnum::VIP    => LoyaltyRateEnum::VIP,
+            LoyaltyLevelEnum::GOLD   => LoyaltyRateEnum::GOLD,
+            LoyaltyLevelEnum::SILVER => LoyaltyRateEnum::SILVER,
+            LoyaltyLevelEnum::BRONZE => LoyaltyRateEnum::BRONZE,
+            default                  => LoyaltyRateEnum::START,
         };
-
-        return (int) $discount;
     }
 
-    public static function getCard($user = null)
+    /**
+     * Update user level based on total_spent
+     *
+     * @param $user
+     * @return void
+     */
+    public static function updateLevel($user): void
+    {
+        if (!$user) {
+            return;
+        }
+
+        $spent = $user->total_spent ?? 0;
+
+        $newLevel = match (true) {
+            $spent >= LoyaltyThresholdEnum::VIP    => LoyaltyLevelEnum::VIP,
+            $spent >= LoyaltyThresholdEnum::GOLD   => LoyaltyLevelEnum::GOLD,
+            $spent >= LoyaltyThresholdEnum::SILVER => LoyaltyLevelEnum::SILVER,
+            $spent >= LoyaltyThresholdEnum::BRONZE => LoyaltyLevelEnum::BRONZE,
+            default                                => LoyaltyLevelEnum::START,
+        };
+
+        if (($user->level ?? LoyaltyLevelEnum::START) !== $newLevel) {
+            $user->level = $newLevel;
+            $user->save();
+        }
+    }
+
+    /**
+     * Get loyalty info for API
+     *
+     * @param $user
+     * @return array
+     */
+    public static function getLoyaltyInfo($user = null): array
     {
         $user = $user ?? Auth::user();
 
-        return CacheService::remember(function () use ($user) {
-            $orders = Order::query()->whereHas('OrderGroup', function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                    ->where(['status' => OrderStatusEnum::SUCCESS]);
-            });
-            $orders_price = $orders->sum('price');
-            if ($orders_price >= CardPriceEnum::GOLD) {
-                return CardEnum::GOLD;
-            } elseif ($orders_price >= CardPriceEnum::PLATINUM) {
-                return CardEnum::PLATINUM;
-            } else {
-                return CardEnum::BLACK;
-            }
-        }, key: md5("card_$user->id"));
+        if (!$user) {
+            return [
+                'balance'     => 0,
+                'level'       => LoyaltyLevelEnum::START,
+                'rate'        => LoyaltyRateEnum::START,
+                'total_spent' => 0,
+                'next_level'  => LoyaltyLevelEnum::BRONZE,
+                'remaining'   => LoyaltyThresholdEnum::BRONZE,
+            ];
+        }
+
+        $level = $user->level ?? LoyaltyLevelEnum::START;
+        $rate = self::getCashback($user);
+        $nextLevel = self::getNextLevel($level);
+        $nextThreshold = $nextLevel ? self::getThreshold($nextLevel) : null;
+        $remaining = $nextThreshold ? max(0, $nextThreshold - ($user->total_spent ?? 0)) : 0;
+
+        return [
+            'balance'     => (int) ($user->balance ?? 0),
+            'level'       => $level,
+            'rate'        => $rate,
+            'total_spent' => (int) ($user->total_spent ?? 0),
+            'next_level'  => $nextLevel,
+            'remaining'   => $remaining,
+        ];
+    }
+
+    /**
+     * Get next level
+     */
+    private static function getNextLevel(string $level): ?string
+    {
+        return match ($level) {
+            LoyaltyLevelEnum::START  => LoyaltyLevelEnum::BRONZE,
+            LoyaltyLevelEnum::BRONZE => LoyaltyLevelEnum::SILVER,
+            LoyaltyLevelEnum::SILVER => LoyaltyLevelEnum::GOLD,
+            LoyaltyLevelEnum::GOLD   => LoyaltyLevelEnum::VIP,
+            default                  => null,
+        };
+    }
+
+    /**
+     * Get threshold for level
+     */
+    private static function getThreshold(string $level): int
+    {
+        return match ($level) {
+            LoyaltyLevelEnum::BRONZE => LoyaltyThresholdEnum::BRONZE,
+            LoyaltyLevelEnum::SILVER => LoyaltyThresholdEnum::SILVER,
+            LoyaltyLevelEnum::GOLD   => LoyaltyThresholdEnum::GOLD,
+            LoyaltyLevelEnum::VIP    => LoyaltyThresholdEnum::VIP,
+            default                  => 0,
+        };
+    }
+
+    /**
+     * @deprecated Используй level вместо card
+     */
+    public static function getCard($user = null)
+    {
+        return null;
     }
 }

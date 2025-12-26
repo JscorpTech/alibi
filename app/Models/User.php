@@ -35,6 +35,8 @@ class User extends Authenticatable implements HasName
         'address_id',
         'is_first_order',
         'balance',
+        'level',
+        'total_spent',
         'card',
         'email',
         'fcm_token',
